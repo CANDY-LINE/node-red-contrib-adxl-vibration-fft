@@ -1,0 +1,29 @@
+{
+  "adxl100x-fft": {
+    "label": {
+      "serialport": "Data I/O Port",
+      "identifier": "Topic",
+      "enabled": "Enable this config",
+      "emitFftValues": "Emit all FFT values",
+      "adxl100xFFT": "ADXL100x FFT",
+      "payloadFormat": "FFT Value Format",
+      "numOfPeaks": "# of Peak Values"
+    },
+    "payloadFormat": {
+      "peak": "Peak value array",
+      "chart": "Dashboard Charts (FFT values and peaks)",
+      "chartWithoutPeak": "Dashboard Charts (FFT values)",
+      "all": "Peak values with all FFT values"
+    },
+    "placeholder": {
+      "serialport": "e.g. /dev/ttyUSB3",
+      "identifier": "Data Source Identifier",
+      "numOfPeaks": "0 to 8"
+    },
+    "status": {
+      "connected": "connected",
+      "disconnected": "disconnected",
+      "error": "error"
+    }
+  }
+}

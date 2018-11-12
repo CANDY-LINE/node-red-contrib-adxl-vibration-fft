@@ -1,0 +1,227 @@
+[
+    {
+        "id": "31ca13bf.496fa4",
+        "type": "tab",
+        "label": "ADXL100x FFT",
+        "disabled": false,
+        "info": ""
+    },
+    {
+        "id": "6f5b31b7.da1fc8",
+        "type": "ADXL100x FFT in",
+        "z": "31ca13bf.496fa4",
+        "name": "ADXL100x FFT for Charts",
+        "payloadFormat": "chart",
+        "adxl100xFFT": "172cedde.892fba",
+        "numOfPeaks": "1",
+        "x": 210,
+        "y": 120,
+        "wires": [
+            [
+                "6605000d.061b68"
+            ]
+        ]
+    },
+    {
+        "id": "6605000d.061b68",
+        "type": "ui_chart",
+        "z": "31ca13bf.496fa4",
+        "name": "",
+        "group": "500a4f26.82c6a8",
+        "order": 0,
+        "width": 0,
+        "height": 0,
+        "label": "ADXL100x FFT Chart",
+        "chartType": "line",
+        "legend": "true",
+        "xformat": "auto",
+        "interpolate": "linear",
+        "nodata": "",
+        "dot": false,
+        "ymin": "",
+        "ymax": "",
+        "removeOlder": 1,
+        "removeOlderPoints": "",
+        "removeOlderUnit": "1",
+        "cutout": 0,
+        "useOneColor": false,
+        "colors": [
+            "#1f77b4",
+            "#aec7e8",
+            "#ff7f0e",
+            "#2ca02c",
+            "#98df8a",
+            "#d62728",
+            "#ff9896",
+            "#9467bd",
+            "#c5b0d5"
+        ],
+        "useOldStyle": false,
+        "x": 540,
+        "y": 180,
+        "wires": [
+            [],
+            []
+        ]
+    },
+    {
+        "id": "66ca7b06.d031c4",
+        "type": "debug",
+        "z": "31ca13bf.496fa4",
+        "name": "",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "x": 510,
+        "y": 440,
+        "wires": []
+    },
+    {
+        "id": "6276da8c.d94f2c",
+        "type": "inject",
+        "z": "31ca13bf.496fa4",
+        "name": "Periodically wipe brwoser data",
+        "topic": "",
+        "payload": "[]",
+        "payloadType": "json",
+        "repeat": "15",
+        "crontab": "",
+        "once": true,
+        "onceDelay": 0.1,
+        "x": 230,
+        "y": 260,
+        "wires": [
+            [
+                "6605000d.061b68"
+            ]
+        ]
+    },
+    {
+        "id": "1ef0bff5.fdb398",
+        "type": "ui_text",
+        "z": "31ca13bf.496fa4",
+        "group": "500a4f26.82c6a8",
+        "order": 0,
+        "width": 0,
+        "height": 0,
+        "name": "",
+        "label": "Peak1 Frequency",
+        "format": "{{msg.payload[0].frequency | number:3 }}",
+        "layout": "row-spread",
+        "x": 530,
+        "y": 360,
+        "wires": []
+    },
+    {
+        "id": "3911a0b8.680ee8",
+        "type": "ui_text",
+        "z": "31ca13bf.496fa4",
+        "group": "500a4f26.82c6a8",
+        "order": 0,
+        "width": 0,
+        "height": 0,
+        "name": "",
+        "label": "Peak1 Amplitude",
+        "format": "{{msg.payload[0].amplitude | number:3 }}",
+        "layout": "row-spread",
+        "x": 530,
+        "y": 400,
+        "wires": []
+    },
+    {
+        "id": "4ca78895.601d98",
+        "type": "ADXL100x FFT in",
+        "z": "31ca13bf.496fa4",
+        "name": "ADXL100x FFT Peak Values",
+        "payloadFormat": "peak",
+        "adxl100xFFT": "172cedde.892fba",
+        "numOfPeaks": 1,
+        "x": 220,
+        "y": 360,
+        "wires": [
+            [
+                "1ef0bff5.fdb398",
+                "3911a0b8.680ee8",
+                "66ca7b06.d031c4"
+            ]
+        ]
+    },
+    {
+        "id": "2d1c508.c040fb",
+        "type": "comment",
+        "z": "31ca13bf.496fa4",
+        "name": "Avoid browser crash",
+        "info": "",
+        "x": 190,
+        "y": 220,
+        "wires": []
+    },
+    {
+        "id": "e16948f8.1aa418",
+        "type": "comment",
+        "z": "31ca13bf.496fa4",
+        "name": "Emit FFT data with 1 peak value every second",
+        "info": "",
+        "x": 270,
+        "y": 80,
+        "wires": []
+    },
+    {
+        "id": "e02d02aa.16c28",
+        "type": "comment",
+        "z": "31ca13bf.496fa4",
+        "name": "Emit FFT peak value every second",
+        "info": "",
+        "x": 240,
+        "y": 320,
+        "wires": []
+    },
+    {
+        "id": "9cf94a8d.770a58",
+        "type": "comment",
+        "z": "31ca13bf.496fa4",
+        "name": "x: Frequency (kHz), y: Amplitude (dBFS)",
+        "info": "",
+        "x": 550,
+        "y": 140,
+        "wires": []
+    },
+    {
+        "id": "69e5d1ef.dd8dc8",
+        "type": "comment",
+        "z": "31ca13bf.496fa4",
+        "name": "Peak Value Indicator",
+        "info": "",
+        "x": 530,
+        "y": 320,
+        "wires": []
+    },
+    {
+        "id": "172cedde.892fba",
+        "type": "ADXL100x FFT",
+        "z": "",
+        "enabled": true,
+        "serialport": "/dev/ttyACM0",
+        "identifier": "abc",
+        "emitFftValues": true
+    },
+    {
+        "id": "500a4f26.82c6a8",
+        "type": "ui_group",
+        "z": "",
+        "name": "ADI ADXL100x FFT Demo",
+        "tab": "2c91f535.2f741a",
+        "disp": true,
+        "width": "6",
+        "collapse": false
+    },
+    {
+        "id": "2c91f535.2f741a",
+        "type": "ui_tab",
+        "z": "",
+        "name": "ADI",
+        "icon": "dashboard"
+    }
+]
