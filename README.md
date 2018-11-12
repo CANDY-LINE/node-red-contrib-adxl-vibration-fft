@@ -4,7 +4,7 @@ node-red-contrib-adxl100x-fft
 [![GitHub release](https://img.shields.io/github/release/CANDY-LINE/node-red-contrib-adxl100x-fft.svg)](https://github.com/CANDY-LINE/node-red-contrib-adxl100x-fft/releases/latest)
 [![master Build Status](https://travis-ci.org/CANDY-LINE/node-red-contrib-adxl100x-fft.svg?branch=master)](https://travis-ci.org/CANDY-LINE/node-red-contrib-adxl100x-fft/)
 
-Node-RED nodes for FFT(Fast Fourier Transform) using Analog Devices' [EVAL-ADXL100X Vibration Sensor Evaluation Board](http://www.analog.com/en/design-center/evaluation-hardware-and-software/evaluation-boards-kits/EVAL-ADXL100X.html), computed by [EV-COG-AD4050 ARM Cortex M4F MCU](http://www.analog.com/en/design-center/evaluation-hardware-and-software/evaluation-boards-kits/EV-COG-AD4050.html) with the special [firmware for FFT](https://www.analog.com/jp/landing-pages/003/form/jp_sensor_pv_vibration.html).
+Node-RED nodes for Vibration Measurement using Analog Devices' [EVAL-ADXL100X Vibration Sensor Evaluation Board](http://www.analog.com/en/design-center/evaluation-hardware-and-software/evaluation-boards-kits/EVAL-ADXL100X.html) and [EV-COG-AD4050 ARM Cortex M4F MCU](http://www.analog.com/en/design-center/evaluation-hardware-and-software/evaluation-boards-kits/EV-COG-AD4050.html) with the special [firmware for FFT (Fast Fourier Transform)](https://www.analog.com/jp/landing-pages/003/form/jp_sensor_pv_vibration.html).
 
 ## Example Flow
 
@@ -32,8 +32,6 @@ The bundled example flow provides the following demonstrations:
 TBW
 
 # How to install
-
-TBW
 
 ## Node-RED users
 
@@ -96,3 +94,6 @@ $ NODE_ENV=development npm pack
 - Node Icon ... [CC BY-ND 3.0](https://creativecommons.org/licenses/by-nd/3.0/) © [icon8](https://icons8.com)
 
 # Revision History
+
+* 1.0.0
+  - Initial Release
