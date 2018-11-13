@@ -97,5 +97,8 @@ $ NODE_ENV=development npm pack
 
 # Revision History
 
+* 1.0.1
+  - Add help text
+
 * 1.0.0
   - Initial Release
