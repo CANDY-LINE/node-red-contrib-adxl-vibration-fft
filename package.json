@@ -1,15 +1,15 @@
 {
-  "name": "node-red-contrib-adxl100x-fft",
+  "name": "node-red-contrib-adxl-vibration-fft",
   "version": "1.0.0",
   "description": "Node-RED nodes for Analog Devices' EVAL-ADXL100X Vibration Sensor Evaluation Board on EV-COG-AD4050 ARM Cortex M4F MCU with the special firmware for FFT(Fast Fourier Transform)",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/CANDY-LINE/node-red-contrib-adxl100x-fft.git"
+    "url": "https://github.com/CANDY-LINE/node-red-contrib-adxl-vibration-fft.git"
   },
   "author": "Daisuke Baba <baba.daisuke@gmail.com>",
   "bugs": {
-    "url": "https://github.com/CANDY-LINE/node-red-contrib-adxl100x-fft/issues"
+    "url": "https://github.com/CANDY-LINE/node-red-contrib-adxl-vibration-fft/issues"
   },
   "scripts": {
     "build": "gulp build",
@@ -20,7 +20,7 @@
   "os": [
     "!win32"
   ],
-  "homepage": "https://github.com/CANDY-LINE/node-red-contrib-adxl100x-fft#readme",
+  "homepage": "https://github.com/CANDY-LINE/node-red-contrib-adxl-vibration-fft#readme",
   "keywords": [
     "node-red",
     "Vibration Sensor",
