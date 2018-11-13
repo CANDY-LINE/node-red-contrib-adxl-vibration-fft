@@ -1,13 +1,82 @@
 <script type="text/x-red" data-help-name="ADXL100x FFT in">
 <p>
-</p>
-<p>
+This node emits the vibration measurement values applied Fast Fourier Transform (FFT).
+FFT is performed on the edge node (microcontroller) rather than in this node.
 </p>
 <h3>Outputs</h3>
 <p>
+  There are 4 output formats.
+  You can specify the format type by choosing <code>FFT Value Format</code>.
+</p>
+<h4>Peak value array</h4>
+<pre>
+[
+  {
+    "frequency": 6.425000000000001,
+    "amplitude": -86.24041575741913
+  },
+  {
+    "frequency": 6.425000000000001,
+    "amplitude": -84.36345586590383
+  },
+  ... (length: # of Peak Values)
+]</pre>
+<h4>Dashboard Charts(FFT values and peaks)</h4>
+<p>
+  The following output can be found when <code># of Peak Values</code> is 1.
+  This format is <code>chart</code> node friednly so you can direcly
+  provide this output to the node as the input values to draw a chart on
+  the dashboard.
 </p>
 <pre>
+[
+  {
+    "series": [
+      "FFT", "Peak1"
+    ],
+    "data": [
+      [-33.13674703428713, -39.12668181549303, ... (length:800) ],
+      [0, 0, 0, ... , -32.13674703428713, ... (length:800) ]
+    ],
+    "labels": [
+      ["0kHz", "0kHz", "0kHz", ..., "1kHz", ... (length:800) ]
+    ]
+  }
+]</pre>
+<h4>Dashboard Charts(FFT values)</h4>
+<p>
+  The format contains only FFT values.
+  This format is <code>chart</code> node friednly so you can direcly
+  provide this output to the node as the input values to draw a chart on
+  the dashboard.
+</p>
+<pre>
+[
+  {
+    "series": [
+      "FFT"
+    ],
+    "data": [
+      [-33.13674703428713, -39.12668181549303, ... (length:800) ],
+    ],
+    "labels": [
+      ["0kHz", "0kHz", "0kHz", ..., "1kHz", ... (length:800) ]
+    ]
+  }
+]</pre>
+<h4>Peak values with all FFT values</h4>
+<pre>
 {
+  "peaks": [
+    {
+      "frequency": 6.425000000000001,
+      "amplitude": -86.24041575741913
+    },
+    ... (length: # of Peak Values)
+  ],
+  "fft": [
+    [-33.13674703428713, -39.12668181549303, ... (length:800) ],
+  ]
 }
 </pre>
 
@@ -15,4 +84,20 @@
 <p>
   Node icon was designed by <a href="https://icons8.com">icons8</a>.
 </p>
+</script>
+
+<script type="text/x-red" data-help-name="ADXL100x FFT">
+<p>
+Configure a FFT data source for the edge node (microcontroller) to communicate.
+</p>
+<ul>
+  <dt>Enable this config</dt>
+  <dd>Turn of to disable this serial port as a FFT source.</dd>
+  <dt>Topic</dt>
+  <dd>You can set <code>msg.topic</code> value if enter here (optional).</dd>
+  <dt>Data I/O Port</dt>
+  <dd>Choose USB serial port.</dd>
+  <dt>Emit all FFT values</dt>
+  <dd>Turn off if you would like to suppress the bulk data emission from this source.</dd>
+</ul>
 </script>
