@@ -97,6 +97,10 @@ $ NODE_ENV=development npm pack
 
 # Revision History
 
+* 1.1.0
+  - Add Node.js v12 support
+  - Drop Node.js v8 support
+
 * 1.0.1
   - Add help text
 
