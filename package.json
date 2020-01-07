@@ -1,6 +1,6 @@
 {
   "name": "node-red-contrib-adxl-vibration-fft",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Node-RED nodes for Analog Devices' EVAL-ADXL100X Vibration Sensor Evaluation Board on EV-COG-AD4050 ARM Cortex M4F MCU with the special firmware for FFT(Fast Fourier Transform)",
   "license": "Apache-2.0",
   "repository": {
@@ -45,7 +45,6 @@
     "babel-preset-minify": "^0.3.0",
     "chai": "^4.1.2",
     "del": "^2.2.2",
-    "fsevents": "^2.1.2",
     "gulp": "^4.0.2",
     "gulp-babel": "^7.0.1",
     "gulp-clean": "^0.4.0",
@@ -69,13 +68,16 @@
     "sinon": "^4.5.0",
     "supertest": "^3.0.0"
   },
+  "optionalDependencies": {
+    "fsevents": "^2.1.2"
+  },
   "dependencies": {
     "serialport": "^8.0.6",
     "source-map-support": "^0.5.4"
   },
   "node-red": {
     "nodes": {
-      "smartmesh": "dist/adxl100x-fft.js"
+      "adxl100x-fft": "dist/adxl100x-fft.js"
     }
   }
 }
