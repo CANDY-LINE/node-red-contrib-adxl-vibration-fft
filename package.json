@@ -77,7 +77,7 @@
   },
   "node-red": {
     "nodes": {
-      "smartmesh": "dist/adxl100x-fft.js"
+      "adxl100x-fft": "dist/adxl100x-fft.js"
     }
   }
 }
