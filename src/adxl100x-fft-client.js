@@ -45,6 +45,7 @@ export class ADXL100xFFTClient {
       return this._createCommandPromise(e, t);
     });
   }
+
   _createCommandPromise(o, a) {
     return new Promise((resolve, reject) => {
       this.port.write(':0 ' + o + ' ' + a + '\r');
@@ -53,7 +54,9 @@ export class ADXL100xFFTClient {
         if (res.startsWith('OK')) {
           return resolve();
         }
-        reject(new Error('CMD: ' + o + ' ' + a + ', Unexpected response: ' + res));
+        reject(
+          new Error('CMD: ' + o + ' ' + a + ', Unexpected response: ' + res)
+        );
       });
     });
   }
