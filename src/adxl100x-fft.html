@@ -30,10 +30,30 @@
       <option value='chartWithoutPeak' data-i18n='adxl100x-fft.payloadFormat.chartWithoutPeak'></option>
       <option value='all' data-i18n='adxl100x-fft.payloadFormat.all'></option>
     </select>
-  </div> </script>
+  </div>
+</script>
 
 <script type="text/javascript">
-  RED.nodes.registerType("ADXL100x FFT in",{category:"ADI",color:"#c0cccc",defaults:{name:{value:""},payloadFormat:{value:"peak",required:!0},adxl100xFFT:{type:"ADXL100x FFT",required:!0},numOfPeaks:{value:1,validate:RED.validators.regex(/^[0-8]$/)}},inputs:0,outputs:1,icon:"fft.png",align:"left",label:function(){return this.name||"ADXL100x FFT"},labelStyle:function(){return this.name?"node_label_italic":""}})
+  RED.nodes.registerType("ADXL100x FFT in", {
+    category: "ADI",
+    color: "#c0cccc",
+    defaults: {
+      name: { value: "" },
+      payloadFormat: { value: "peak", required: !0 },
+      adxl100xFFT: { type: "ADXL100x FFT", required: !0 },
+      numOfPeaks: { value: 1, validate: RED.validators.regex(/^[0-8]$/) }
+    },
+    inputs: 0,
+    outputs: 1,
+    icon: "fft.png",
+    align: "left",
+    label: function() {
+      return this.name || "ADXL100x FFT";
+    },
+    labelStyle: function() {
+      return this.name ? "node_label_italic" : "";
+    }
+  });
 </script>
 <script type="text/x-red" data-template-name="ADXL100x FFT">
   <div class="form-row">
@@ -54,7 +74,7 @@
       <span data-i18n='adxl100x-fft.label.serialport'></span>
     </label>
     <input type='text' id='node-config-input-serialport' data-i18n='[placeholder]adxl100x-fft.placeholder.serialport' style='width:60%;'>
-    <a id='node-config-lookup-serial' class='btn'>
+    <a id='node-config-lookup-serial' class='red-ui-button'>
       <i id='node-config-lookup-serial-icon' class='fa fa-search'></i>
     </a>
   </div>
@@ -65,65 +85,53 @@
   </div>
 </script>
 <script type="text/javascript">
-"use strict";
-RED.nodes.registerType("ADXL100x FFT",
-  {
-    category:"config",
-    defaults:
-    {
-      enabled:
-      {
-        value:!0,
-        required:!0
+  "use strict";
+  RED.nodes.registerType("ADXL100x FFT", {
+    category: "config",
+    defaults: {
+      enabled: {
+        value: !0,
+        required: !0
       },
-      serialport:
-      {
-        value:"",
-        required:!0
+      serialport: {
+        value: "",
+        required: !0
       },
-      identifier:
-      {
-        value:"",
-        required:!0
+      identifier: {
+        value: "",
+        required: !0
       },
-      emitFftValues:
-      {
-        value:!1,
-        required:!0
+      emitFftValues: {
+        value: !1,
+        required: !0
       }
     },
-    label:function(){
-      return this.identifier||this.serialport
+    label: function() {
+      return this.identifier || this.serialport;
     },
-    oneditprepare:function()
-    {
-      $("#node-config-input-serialport").blur(function()
-      {
-        var e=$(this).val();
-        e&&"string"==typeof e&&$(this).val(e.trim())
+    oneditprepare: function() {
+      $("#node-config-input-serialport").blur(function() {
+        var e = $(this).val();
+        e && "string" == typeof e && $(this).val(e.trim());
       }),
-      $("#node-config-lookup-serial").click(function()
-      {
-        $("#node-config-lookup-serial").addClass("disabled"),
-        $.getJSON("adxl100x-fft-ports",function(e)
-        {
-          $("#node-config-lookup-serial").removeClass("disabled");
-          var o=[];
-          $.each(e,function(e,i)
-          {
-            o.push(i.comName)
-          }),
-          $("#node-config-input-serialport").autocomplete(
-          {
-            source:o,
-            minLength:0,
-            close:function(e,i)
-            {
-              $("#node-config-input-serialport").autocomplete("destroy")
-            }
-          }).autocomplete("search","")
-        })
-      })
+        $("#node-config-lookup-serial").click(function() {
+          $("#node-config-lookup-serial").addClass("disabled");
+          $.getJSON("adxl100x-fft-ports", function(data) {
+            $("#node-config-lookup-serial").removeClass("disabled");
+            var ports = (data || []).map(function(e) {
+              return e.path;
+            });
+            $("#node-config-input-serialport")
+              .autocomplete({
+                source: ports,
+                minLength: 0,
+                close: function(event, ui) {
+                  $("#node-config-input-serialport").autocomplete("destroy");
+                }
+              })
+              .autocomplete("search", "");
+          });
+        });
     }
-  })
+  });
 </script>
