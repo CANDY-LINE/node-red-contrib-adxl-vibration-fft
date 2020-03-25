@@ -35,7 +35,7 @@ export default function(RED) {
       RED.nodes.createNode(this, t);
       this.serialport = t.serialport;
       if (o[this.serialport]) {
-        throw Error('Duplicate serialport configuration for ADXL100xFFTNode!');
+        throw new Error('Duplicate serialport configuration for ADXL100xFFTNode!');
       }
       this.identifier = t.identifier;
       this.enabled = !!t.enabled;

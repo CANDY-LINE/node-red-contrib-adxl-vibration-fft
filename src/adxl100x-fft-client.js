@@ -261,7 +261,7 @@ export class ADXL100xFFTClient {
     if (
       (this.debug('[_parseNotifyBuf] buf => ' + e + ', len => ' + e.length), !e)
     )
-      throw Error('No input!');
+      throw new Error('No input!');
     return (
       Array.isArray(e)
         ? (e = Buffer.from(e))
@@ -292,7 +292,7 @@ export class ADXL100xFFTClient {
   }
 
   _parseDataBuf(e) {
-    if (!e) throw Error('No input!');
+    if (!e) throw new Error('No input!');
     Array.isArray(e)
       ? (e = Buffer.from(e))
       : Buffer.isBuffer(e) || (e = Buffer.from(e.toString()));
