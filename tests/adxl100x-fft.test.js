@@ -25,7 +25,7 @@ import adxl100xfftModule from "../dist/adxl100x-fft";
 
 const RED = {};
 
-describe("ADXL100zFFT node", () => {
+describe("ADXL100xFFT node", () => {
   RED.debug = true;
   let sandbox;
   let types;
