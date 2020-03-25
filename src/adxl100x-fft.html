@@ -39,8 +39,8 @@
     color: "#c0cccc",
     defaults: {
       name: { value: "" },
-      payloadFormat: { value: "peak", required: !0 },
-      adxl100xFFT: { type: "ADXL100x FFT", required: !0 },
+      payloadFormat: { value: "peak", required: true },
+      adxl100xFFT: { type: "ADXL100x FFT", required: true },
       numOfPeaks: { value: 1, validate: RED.validators.regex(/^[0-8]$/) }
     },
     inputs: 0,
@@ -90,20 +90,20 @@
     category: "config",
     defaults: {
       enabled: {
-        value: !0,
-        required: !0
+        value: true,
+        required: true
       },
       serialport: {
         value: "",
-        required: !0
+        required: true
       },
       identifier: {
         value: "",
-        required: !0
+        required: true
       },
       emitFftValues: {
         value: !1,
-        required: !0
+        required: true
       }
     },
     label: function() {

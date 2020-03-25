@@ -87,7 +87,7 @@ export default function(RED) {
             !this.nodes[e.id] &&
             ((this.nodes[e.id] = e),
             this.client.closed ? e.emit('disconnected') : e.emit('connected'),
-            !0)
+            true)
           );
         },
         remove: e => {
@@ -117,7 +117,7 @@ export default function(RED) {
     consttructor(t) {
       RED.nodes.createNode(this, t);
       this.name = t.name;
-      this.input = !0;
+      this.input = true;
       this.payloadFormat = t.payloadFormat;
       this.numOfPeaks = t.numOfPeaks;
       this.adxl100xFFTNodeId = t.adxl100xFFT;

@@ -118,7 +118,7 @@ export class ADXL100xFFTClient {
   _onFftReady() {
     var n = this;
     this.commandMode = !1;
-    this.fftHeaderInProgress = !0;
+    this.fftHeaderInProgress = true;
     this.fftHeader = null;
     this.bus.emit('connected');
     this.debug('[_onFftReady] OK');
@@ -153,7 +153,7 @@ export class ADXL100xFFTClient {
               header: n._parseNotifyBuf(n.fftHeader),
               body: n._parseDataBuf(n.fftBody)
             }),
-            (n.fftHeaderInProgress = !0),
+            (n.fftHeaderInProgress = true),
             (n.fftHeader = null),
             (n.fftBody = null),
             (n.fftBodySize = 0));
@@ -173,7 +173,7 @@ export class ADXL100xFFTClient {
           baudRate: 230400
         });
         o.port.on('close', () => {
-          o.bus.emit('disconnected'), (o.closed = !0);
+          o.bus.emit('disconnected'), (o.closed = true);
         });
         o.port.on('error', e => {
           o.debug('[error] ' + e.stack);
@@ -185,7 +185,7 @@ export class ADXL100xFFTClient {
         });
         o.port.on('open', () => {
           o.closed = !1;
-          o.commandMode = !0;
+          o.commandMode = true;
           o.debug('Serial port (' + o.serialport + ') is now open.');
           var t = void 0;
           t = setTimeout(function e() {
@@ -244,7 +244,7 @@ export class ADXL100xFFTClient {
           })
           .then(() => {
             r.port.close(() => {
-              return e(!0);
+              return e(true);
             });
           })
           .catch(e => {
