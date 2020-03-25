@@ -14,6 +14,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+/*jslint bitwise: true */
+
 'use strict';
 import 'source-map-support/register';
 import { EventEmitter } from 'events';
@@ -230,7 +233,9 @@ export class ADXL100xFFTClient {
 
   shutdown() {
     let r = this;
-    if (this.closed) return Promise.resolve();
+    if (this.closed) {
+      return Promise.resolve();
+    }
     return (this.commandMode
       ? Promise.resolve()
       : new Promise(e => {
@@ -265,8 +270,9 @@ export class ADXL100xFFTClient {
   _parseNotifyBuf(e) {
     if (
       (this.debug('[_parseNotifyBuf] buf => ' + e + ', len => ' + e.length), !e)
-    )
+    ) {
       throw new Error('No input!');
+    }
     return (
       Array.isArray(e)
         ? (e = Buffer.from(e))
@@ -297,7 +303,9 @@ export class ADXL100xFFTClient {
   }
 
   _parseDataBuf(e) {
-    if (!e) throw new Error('No input!');
+    if (!e) {
+      throw new Error('No input!');
+    }
     Array.isArray(e)
       ? (e = Buffer.from(e))
       : Buffer.isBuffer(e) || (e = Buffer.from(e.toString()));
@@ -308,7 +316,7 @@ export class ADXL100xFFTClient {
         o = 8;
       o < 20;
       o += 3
-    )
+    ) {
       (n = ((15 & e[o + 1]) << 8) + e[o]),
         r.push({
           frequency: n
@@ -317,7 +325,10 @@ export class ADXL100xFFTClient {
         r.push({
           frequency: n
         });
+    }
+      
     for (let a = null, i = null, u = 0; u < 8; u++)
+     {
       (i =
         ((((1 - 2 * ((128 & (a = e[21 + 2 * u])) >> 7)) *
           Math.pow(2, (124 & a) >> 2)) /
@@ -325,6 +336,7 @@ export class ADXL100xFFTClient {
           (1024 + 256 * (3 & a) + e[20 + 2 * u])) /
         1024),
         (r[u].amplitude = i);
+     }
     let f = null;
     if (this.emitFftValues) {
       f = Array(800);
