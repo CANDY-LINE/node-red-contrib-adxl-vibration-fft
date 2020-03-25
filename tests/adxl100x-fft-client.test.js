@@ -15,10 +15,11 @@
  * limitations under the License.
  */
 
+/*jshint camelcase: false */
+
 'use strict';
 
 import 'source-map-support/register';
-import * as sinon from 'sinon';
 import { assert } from 'chai';
 import { ADXL100xFFTClient } from '../dist/adxl100x-fft-client';
 
