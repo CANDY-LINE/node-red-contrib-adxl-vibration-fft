@@ -14,10 +14,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-"use strict";
-import "source-map-support/register";
-import { EventEmitter } from "events";
-import SerialPort from "serialport";
+'use strict';
+import 'source-map-support/register';
+import { EventEmitter } from 'events';
+import SerialPort from 'serialport';
 
 export class ADXL100xFFTClient {
   constructor(e = {}) {
@@ -36,27 +36,27 @@ export class ADXL100xFFTClient {
     this.closed = true;
     this.frequencyLabels = [];
     for (let t = 0; t < 800; t++) {
-      this.frequencyLabels.push(Math.floor((20 * t) / 799) + "kHz");
+      this.frequencyLabels.push(Math.floor((20 * t) / 799) + 'kHz');
     }
   }
 
   _createUartCommandPromise(e, t, r) {
     var n = this;
-    return this._createCommandPromise("CPS", "0000").then(() => {
+    return this._createCommandPromise('CPS', '0000').then(() => {
       return n._createCommandPromise(e, t, r);
     });
   }
   _createCommandPromise(o, a, t) {
     var e = this;
     return new Promise((r, n) => {
-      e.port.write(":0 " + o + " " + a + "\r"),
+      e.port.write(':0 ' + o + ' ' + a + '\r'),
         t ||
           (t = e => {
             var t = e.toString();
-            if (t.startsWith("OK")) return r();
-            n(Error("CMD: " + o + " " + a + ", Unexpected response: " + t));
+            if (t.startsWith('OK')) return r();
+            n(Error('CMD: ' + o + ' ' + a + ', Unexpected response: ' + t));
           }),
-        e.bus.once("command-response", e => {
+        e.bus.once('command-response', e => {
           return t(e);
         });
     });
@@ -67,51 +67,51 @@ export class ADXL100xFFTClient {
     return new Promise(t => {
       r.commandMode = !0;
       setTimeout(function e() {
-        r._createCommandPromise("CRE", "0000")
+        r._createCommandPromise('CRE', '0000')
           .then(() => {
             t();
           })
           .catch(() => {
-            r.log("[_onShutdownRequested] error retry..."), setTimeout(e, 100);
+            r.log('[_onShutdownRequested] error retry...'), setTimeout(e, 100);
           });
       }, 0);
     }).then(() => {
-      return r._createCommandPromise("SRS", "0000");
+      return r._createCommandPromise('SRS', '0000');
     });
   }
 
   _onInitCompleted() {
     var e = this;
-    return this._createCommandPromise("CPS", "0000")
+    return this._createCommandPromise('CPS', '0000')
       .then(() => {
-        return e._createUartCommandPromise("RMC", "0000");
+        return e._createUartCommandPromise('RMC', '0000');
       })
       .then(() => {
-        return e._createUartCommandPromise("RRP", "001s");
+        return e._createUartCommandPromise('RRP', '001s');
       })
       .then(() => {
-        return e._createUartCommandPromise("BSZ", "0000");
+        return e._createUartCommandPromise('BSZ', '0000');
       })
       .then(() => {
-        return e._createUartCommandPromise("DFA", "0001");
+        return e._createUartCommandPromise('DFA', '0001');
       })
       .then(() => {
-        return e._createUartCommandPromise("AL1", "0002");
+        return e._createUartCommandPromise('AL1', '0002');
       })
       .then(() => {
-        return e._createUartCommandPromise("AH1", "0800");
+        return e._createUartCommandPromise('AH1', '0800');
       })
       .then(() => {
-        return e._createUartCommandPromise("AL8", "0300");
+        return e._createUartCommandPromise('AL8', '0300');
       })
       .then(() => {
-        return e._createUartCommandPromise("AH8", "0600");
+        return e._createUartCommandPromise('AH8', '0600');
       })
       .then(() => {
-        return e._createUartCommandPromise("AC8", "0003");
+        return e._createUartCommandPromise('AC8', '0003');
       })
       .then(() => {
-        return e._createCommandPromise("CRS", "0000");
+        return e._createCommandPromise('CRS', '0000');
       })
       .then(() => {
         return e._onFftReady();
@@ -123,9 +123,9 @@ export class ADXL100xFFTClient {
     this.commandMode = !1;
     this.fftHeaderInProgress = !0;
     this.fftHeader = null;
-    this.bus.emit("connected");
-    this.debug("[_onFftReady] OK");
-    this.bus.on("fft", e => {
+    this.bus.emit('connected');
+    this.debug('[_onFftReady] OK');
+    this.bus.on('fft', e => {
       for (; 0 < e.length; ) {
         if (n.fftHeaderInProgress) {
           n.fftHeader = n.fftHeader || Buffer.from([]);
@@ -137,13 +137,13 @@ export class ADXL100xFFTClient {
             return;
           (n.fftBodySize = 256 * n.fftHeader[9] + n.fftHeader[10] + 4),
             n.debug(
-              "FFT header => [" +
+              'FFT header => [' +
                 n.fftHeader.toString() +
-                "], [" +
-                n.fftHeader.toString("hex") +
-                "]"
+                '], [' +
+                n.fftHeader.toString('hex') +
+                ']'
             ),
-            n.debug("FFT body size => " + n.fftBodySize),
+            n.debug('FFT body size => ' + n.fftBodySize),
             (n.fftHeaderInProgress = !1),
             (n.fftBody = Buffer.from([])),
             (e = e.slice(12 - t));
@@ -152,7 +152,7 @@ export class ADXL100xFFTClient {
         (n.fftBody = Buffer.concat([n.fftBody, e.slice(0, r)])),
           (e = e.slice(r)),
           n.fftBody.length === n.fftBodySize &&
-            (n.bus.emit("fft-data-arrived", {
+            (n.bus.emit('fft-data-arrived', {
               header: n._parseNotifyBuf(n.fftHeader),
               body: n._parseDataBuf(n.fftBody)
             }),
@@ -162,9 +162,9 @@ export class ADXL100xFFTClient {
             (n.fftBodySize = 0));
       }
     });
-    this.bus.on("fft-data-arrived", e => {
-      n.debug("[fft-data-arrived] command => " + e.header.command),
-        "XFD" === e.header.command && n.bus.emit("data", e.body);
+    this.bus.on('fft-data-arrived', e => {
+      n.debug('[fft-data-arrived] command => ' + e.header.command),
+        'XFD' === e.header.command && n.bus.emit('data', e.body);
     });
   }
 
@@ -175,40 +175,40 @@ export class ADXL100xFFTClient {
         o.port = new SerialPort(o.serialport, {
           baudRate: 230400
         });
-        o.port.on("close", () => {
-          o.bus.emit("disconnected"), (o.closed = !0);
+        o.port.on('close', () => {
+          o.bus.emit('disconnected'), (o.closed = !0);
         });
-        o.port.on("error", e => {
-          o.debug("[error] " + e.stack);
+        o.port.on('error', e => {
+          o.debug('[error] ' + e.stack);
           o.closed &&
             o.port.close(() => {
-              o.log("[info] trying to re-connect"), setTimeout(t, 5e3);
+              o.log('[info] trying to re-connect'), setTimeout(t, 5e3);
             });
-          o.bus.emit("error");
+          o.bus.emit('error');
         });
-        o.port.on("open", () => {
+        o.port.on('open', () => {
           o.closed = !1;
           o.commandMode = !0;
-          o.debug("Serial port (" + o.serialport + ") is now open.");
+          o.debug('Serial port (' + o.serialport + ') is now open.');
           var t = void 0;
           t = setTimeout(function e() {
-            o.port.write("\r"), (t = setTimeout(e, 100));
+            o.port.write('\r'), (t = setTimeout(e, 100));
           }, 100);
-          o.port.write("\r");
-          o.bus.once("command-response", e => {
+          o.port.write('\r');
+          o.bus.once('command-response', e => {
             return clearTimeout(t), n(e);
           });
         });
         var r = void 0;
-        o.port.on("data", e => {
+        o.port.on('data', e => {
           o.commandMode
             ? ((r = r || Buffer.from([])),
               (1 < (r = Buffer.concat([r, e])).length &&
                 10 === r[r.length - 2]) ||
               13 === r[r.length - 1]
-                ? (o.bus.emit("command-response", r), (r = null))
-                : o.bus.emit("command-response-data", e))
-            : o.bus.emit("fft", e);
+                ? (o.bus.emit('command-response', r), (r = null))
+                : o.bus.emit('command-response-data', e))
+            : o.bus.emit('fft', e);
         });
       }, 0);
     });
@@ -218,7 +218,7 @@ export class ADXL100xFFTClient {
     var r = this;
     return this._openSerialPort().then(e => {
       var t = e.toString();
-      r.debug("initialMessage => " + t);
+      r.debug('initialMessage => ' + t);
       return r._onInitCompleted();
     });
   }
@@ -229,8 +229,8 @@ export class ADXL100xFFTClient {
     return (this.commandMode
       ? Promise.resolve()
       : new Promise(e => {
-          r.debug("Schedule the shutdown command..."),
-            r.bus.once("data", () => {
+          r.debug('Schedule the shutdown command...'),
+            r.bus.once('data', () => {
               return e();
             });
         })
@@ -239,7 +239,7 @@ export class ADXL100xFFTClient {
         return r
           ._onShutdownRequested()
           .then(() => {
-            ["fft", "fft-data-arrived", "command-response"].forEach(t => {
+            ['fft', 'fft-data-arrived', 'command-response'].forEach(t => {
               r.bus.listeners(t).forEach(e => {
                 return r.bus.removeListener(t, e);
               });
@@ -259,9 +259,9 @@ export class ADXL100xFFTClient {
 
   _parseNotifyBuf(e) {
     if (
-      (this.debug("[_parseNotifyBuf] buf => " + e + ", len => " + e.length), !e)
+      (this.debug('[_parseNotifyBuf] buf => ' + e + ', len => ' + e.length), !e)
     )
-      throw Error("No input!");
+      throw Error('No input!');
     return (
       Array.isArray(e)
         ? (e = Buffer.from(e))
@@ -292,7 +292,7 @@ export class ADXL100xFFTClient {
   }
 
   _parseDataBuf(e) {
-    if (!e) throw Error("No input!");
+    if (!e) throw Error('No input!');
     Array.isArray(e)
       ? (e = Buffer.from(e))
       : Buffer.isBuffer(e) || (e = Buffer.from(e.toString()));
@@ -348,9 +348,9 @@ export class ADXL100xFFTClient {
     r < 0 ? (r = 0) : 8 < r && (r = 8);
     var i = e.peaks.slice(0, r);
     switch (n) {
-      case "chart":
-      case "chartWithoutPeak":
-        var u = ["FFT"],
+      case 'chart':
+      case 'chartWithoutPeak':
+        var u = ['FFT'],
           f = [
             e.raw
               ? e.raw.map(e => {
@@ -358,9 +358,9 @@ export class ADXL100xFFTClient {
                 })
               : []
           ];
-        "chart" === n &&
+        'chart' === n &&
           i.forEach((e, t) => {
-            u.push("Peak" + (t + 1));
+            u.push('Peak' + (t + 1));
             var r = Array(800).fill(0);
             (r[e.frequency] = o._convertAmp(e.amplitude) + 10), f.push(r);
           }),
@@ -372,7 +372,7 @@ export class ADXL100xFFTClient {
             }
           ]);
         break;
-      case "all":
+      case 'all':
         var s = e.raw
           ? Array.prototype.slice.call(e.raw, 0).map(e => {
               return o._convertAmp(e);
@@ -388,7 +388,7 @@ export class ADXL100xFFTClient {
           fft: s
         };
         break;
-      case "peak":
+      case 'peak':
         a.payload = i.map(e => {
           return {
             frequency: 0.025 * e.frequency,

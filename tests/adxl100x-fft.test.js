@@ -15,17 +15,17 @@
  * limitations under the License.
  */
 
-"use strict";
+'use strict';
 
-import "source-map-support/register";
-import * as sinon from "sinon";
-import { assert } from "chai";
-import EventEmitter from "events";
-import adxl100xfftModule from "../dist/adxl100x-fft";
+import 'source-map-support/register';
+import * as sinon from 'sinon';
+import { assert } from 'chai';
+import EventEmitter from 'events';
+import adxl100xfftModule from '../dist/adxl100x-fft';
 
 const RED = {};
 
-describe("ADXL100xFFT node", () => {
+describe('ADXL100xFFT node', () => {
   RED.debug = true;
   let sandbox;
   let types;
@@ -61,10 +61,10 @@ describe("ADXL100xFFT node", () => {
   afterEach(() => {
     sandbox = sandbox.restore();
   });
-  it("should be successfully imported", () => {
+  it('should be successfully imported', () => {
     assert.isNotNull(RED);
     adxl100xfftModule(RED);
-    assert.isNotNull(new types["ADXL100x FFT"]({}));
-    assert.isNotNull(new types["ADXL100x FFT in"]({}));
+    assert.isNotNull(new types['ADXL100x FFT']({}));
+    assert.isNotNull(new types['ADXL100x FFT in']({}));
   });
 });

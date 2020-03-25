@@ -14,10 +14,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-"use strict";
-import "source-map-support/register";
-import SerialPort from "serialport";
-import { ADXL100xFFTClient } from "./adxl100x-fft-client";
+'use strict';
+import 'source-map-support/register';
+import SerialPort from 'serialport';
+import { ADXL100xFFTClient } from './adxl100x-fft-client';
 
 export default function(RED) {
   const o = {};
@@ -26,7 +26,7 @@ export default function(RED) {
       o[e].shutdown();
     });
   };
-  process.on("exit", exitHandler);
+  process.on('exit', exitHandler);
   if (RED.settings && RED.settings.exitHandlers) {
     RED.settings.exitHandlers.push(exitHandler);
   }
@@ -35,13 +35,13 @@ export default function(RED) {
       RED.nodes.createNode(this, t);
       this.serialport = t.serialport;
       if (o[this.serialport]) {
-        throw Error("Duplicate serialport configuration for ADXL100xFFTNode!");
+        throw Error('Duplicate serialport configuration for ADXL100xFFTNode!');
       }
       this.identifier = t.identifier;
       this.enabled = !!t.enabled;
       this.emitFftValues = !!t.emitFftValues;
       this.nodes = {};
-      ["connected", "disconnected", "error"].forEach(i => {
+      ['connected', 'disconnected', 'error'].forEach(i => {
         this.on(i, () => {
           for (var e = arguments.length, t = Array(e), n = 0; n < e; n++)
             t[n] = arguments[n];
@@ -54,7 +54,7 @@ export default function(RED) {
           }
         });
       });
-      this.on("data", i => {
+      this.on('data', i => {
         try {
           Object.keys(this.nodes).forEach(e => {
             if (this.nodes[e].input) {
@@ -67,7 +67,7 @@ export default function(RED) {
           this.error(e);
         }
       });
-      this.on("close", t => {
+      this.on('close', t => {
         return (
           delete o[this.serialport],
           this.client
@@ -86,7 +86,7 @@ export default function(RED) {
             !!e &&
             !this.nodes[e.id] &&
             ((this.nodes[e.id] = e),
-            this.client.closed ? e.emit("disconnected") : e.emit("connected"),
+            this.client.closed ? e.emit('disconnected') : e.emit('connected'),
             !0)
           );
         },
@@ -106,12 +106,12 @@ export default function(RED) {
         });
       } else {
         process.nextTick(() => {
-          this.emit("disconnected");
+          this.emit('disconnected');
         });
       }
     }
   }
-  RED.nodes.registerType("ADXL100x FFT", ADXL100xFFTNode);
+  RED.nodes.registerType('ADXL100x FFT', ADXL100xFFTNode);
 
   class ADXL100xFFTInNode {
     consttructor(t) {
@@ -123,38 +123,38 @@ export default function(RED) {
       this.adxl100xFFTNodeId = t.adxl100xFFT;
       this.adxl100xFFTNode = RED.nodes.getNode(this.adxl100xFFTNodeId);
       if (this.adxl100xFFTNode) {
-        this.on("connected", () => {
+        this.on('connected', () => {
           const e =
             0 < arguments.length && void 0 !== arguments[0] ? arguments[0] : 0;
           this.status({
-            fill: "green",
-            shape: "dot",
-            text: RED._("adxl100x-fft.status.connected", {
+            fill: 'green',
+            shape: 'dot',
+            text: RED._('adxl100x-fft.status.connected', {
               n: e
             })
           });
         });
-        ["disconnected", "error"].forEach(e => {
+        ['disconnected', 'error'].forEach(e => {
           this.on(e, () => {
             this.status({
-              fill: "red",
-              shape: "ring",
-              text: "adxl100x-fft.status." + e
+              fill: 'red',
+              shape: 'ring',
+              text: 'adxl100x-fft.status.' + e
             });
           });
         });
-        this.on("close", () => {
+        this.on('close', () => {
           this.adxl100xFFTNode && this.adxl100xFFTNode.operations.remove(this);
         });
         this.adxl100xFFTNode.operations.register(this);
       }
     }
   }
-  RED.nodes.registerType("ADXL100x FFT in", ADXL100xFFTInNode);
+  RED.nodes.registerType('ADXL100x FFT in', ADXL100xFFTInNode);
 
   RED.httpAdmin.get(
-    "/adxl100x-fft-ports",
-    RED.auth.needsPermission("serial.read"),
+    '/adxl100x-fft-ports',
+    RED.auth.needsPermission('serial.read'),
     (req, res) => {
       SerialPort.list()
         .then(t => {
