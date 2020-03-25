@@ -132,20 +132,21 @@ export class ADXL100xFFTClient {
           if (
             ((n.fftHeader = Buffer.concat([n.fftHeader, e.slice(0, 12 - t)])),
             12 !== n.fftHeader.length)
-          )
+          ) {
             return;
-          (n.fftBodySize = 256 * n.fftHeader[9] + n.fftHeader[10] + 4),
-            n.debug(
-              'FFT header => [' +
-                n.fftHeader.toString() +
-                '], [' +
-                n.fftHeader.toString('hex') +
-                ']'
-            ),
-            n.debug('FFT body size => ' + n.fftBodySize),
-            (n.fftHeaderInProgress = !1),
-            (n.fftBody = Buffer.from([])),
-            (e = e.slice(12 - t));
+          }
+          n.fftBodySize = 256 * n.fftHeader[9] + n.fftHeader[10] + 4;
+          n.debug(
+            'FFT header => [' +
+              n.fftHeader.toString() +
+              '], [' +
+              n.fftHeader.toString('hex') +
+              ']'
+          );
+          n.debug('FFT body size => ' + n.fftBodySize);
+          n.fftHeaderInProgress = !1;
+          n.fftBody = Buffer.from([]);
+          e = e.slice(12 - t);
         }
         let r = n.fftBodySize - n.fftBody.length;
         (n.fftBody = Buffer.concat([n.fftBody, e.slice(0, r)])),
