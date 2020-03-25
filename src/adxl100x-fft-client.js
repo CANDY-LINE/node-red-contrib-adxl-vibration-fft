@@ -118,7 +118,7 @@ export class ADXL100xFFTClient {
   }
 
   _onFftReady() {
-    var n = this;
+    let n = this;
     this.commandMode = !1;
     this.fftHeaderInProgress = true;
     this.fftHeader = null;
@@ -128,7 +128,7 @@ export class ADXL100xFFTClient {
       for (; 0 < e.length; ) {
         if (n.fftHeaderInProgress) {
           n.fftHeader = n.fftHeader || Buffer.from([]);
-          var t = n.fftHeader.length;
+          let t = n.fftHeader.length;
           if (
             ((n.fftHeader = Buffer.concat([n.fftHeader, e.slice(0, 12 - t)])),
             12 !== n.fftHeader.length)
@@ -147,7 +147,7 @@ export class ADXL100xFFTClient {
             (n.fftBody = Buffer.from([])),
             (e = e.slice(12 - t));
         }
-        var r = n.fftBodySize - n.fftBody.length;
+        let r = n.fftBodySize - n.fftBody.length;
         (n.fftBody = Buffer.concat([n.fftBody, e.slice(0, r)])),
           (e = e.slice(r)),
           n.fftBody.length === n.fftBodySize &&
@@ -168,7 +168,7 @@ export class ADXL100xFFTClient {
   }
 
   _openSerialPort() {
-    var o = this;
+    let o = this;
     return new Promise(n => {
       setTimeout(function t() {
         o.port = new SerialPort(o.serialport, {
@@ -189,7 +189,7 @@ export class ADXL100xFFTClient {
           o.closed = !1;
           o.commandMode = true;
           o.debug('Serial port (' + o.serialport + ') is now open.');
-          var t = void 0;
+          let t = void 0;
           t = setTimeout(function e() {
             o.port.write('\r'), (t = setTimeout(e, 100));
           }, 100);
@@ -198,7 +198,7 @@ export class ADXL100xFFTClient {
             return clearTimeout(t), n(e);
           });
         });
-        var r = void 0;
+        let r = void 0;
         o.port.on('data', e => {
           o.commandMode
             ? ((r = r || Buffer.from([])),
@@ -214,16 +214,16 @@ export class ADXL100xFFTClient {
   }
 
   start() {
-    var r = this;
+    let r = this;
     return this._openSerialPort().then(e => {
-      var t = e.toString();
+      let t = e.toString();
       r.debug('initialMessage => ' + t);
       return r._onInitCompleted();
     });
   }
 
   shutdown() {
-    var r = this;
+    let r = this;
     if (this.closed) return Promise.resolve();
     return (this.commandMode
       ? Promise.resolve()
@@ -272,7 +272,7 @@ export class ADXL100xFFTClient {
     );
   }
   _byte2binary16(e) {
-    var t = 32768 & e,
+    let t = 32768 & e,
       r = (e >> 10) & 31,
       n = 1023 & e;
     return 31 === r
@@ -296,7 +296,7 @@ export class ADXL100xFFTClient {
       ? (e = Buffer.from(e))
       : Buffer.isBuffer(e) || (e = Buffer.from(e.toString()));
     for (
-      var t = e[0] + 256 * e[1] + 65536 * e[2] + 16777216 * e[3],
+      let t = e[0] + 256 * e[1] + 65536 * e[2] + 16777216 * e[3],
         r = [],
         n = void 0,
         o = 8;
@@ -311,7 +311,7 @@ export class ADXL100xFFTClient {
         r.push({
           frequency: n
         });
-    for (var a = void 0, i = void 0, u = 0; u < 8; u++)
+    for (let a = void 0, i = void 0, u = 0; u < 8; u++)
       (i =
         ((((1 - 2 * ((128 & (a = e[21 + 2 * u])) >> 7)) *
           Math.pow(2, (124 & a) >> 2)) /
@@ -319,11 +319,11 @@ export class ADXL100xFFTClient {
           (1024 + 256 * (3 & a) + e[20 + 2 * u])) /
         1024),
         (r[u].amplitude = i);
-    var f = void 0;
+    let f = void 0;
     if (this.emitFftValues) {
       f = Array(800);
-      for (var s = 0; s < 800; s++) {
-        var c = 36 + 2 * s;
+      for (let s = 0; s < 800; s++) {
+        let c = 36 + 2 * s;
         f[s] = this._byte2binary16(e[c] + 256 * e[c + 1]);
       }
     }
@@ -339,17 +339,17 @@ export class ADXL100xFFTClient {
   }
 
   format(e, t, r, n) {
-    var o = this,
+    let o = this,
       a = {
         timestamp: e.timestamp,
         topic: t
       };
     r < 0 ? (r = 0) : 8 < r && (r = 8);
-    var i = e.peaks.slice(0, r);
+    let i = e.peaks.slice(0, r);
     switch (n) {
       case 'chart':
       case 'chartWithoutPeak':
-        var u = ['FFT'],
+        let u = ['FFT'],
           f = [
             e.raw
               ? e.raw.map(e => {
@@ -360,7 +360,7 @@ export class ADXL100xFFTClient {
         'chart' === n &&
           i.forEach((e, t) => {
             u.push('Peak' + (t + 1));
-            var r = Array(800).fill(0);
+            let r = Array(800).fill(0);
             (r[e.frequency] = o._convertAmp(e.amplitude) + 10), f.push(r);
           }),
           (a.payload = [
@@ -372,7 +372,7 @@ export class ADXL100xFFTClient {
           ]);
         break;
       case 'all':
-        var s = e.raw
+        let s = e.raw
           ? Array.prototype.slice.call(e.raw, 0).map(e => {
               return o._convertAmp(e);
             })
