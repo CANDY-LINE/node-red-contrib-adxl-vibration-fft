@@ -40,43 +40,40 @@ export class ADXL100xFFTClient {
     }
   }
 
-  _createUartCommandPromise(e, t, r) {
-    var n = this;
+  _createUartCommandPromise(e, t) {
     return this._createCommandPromise('CPS', '0000').then(() => {
-      return n._createCommandPromise(e, t, r);
+      return this._createCommandPromise(e, t);
     });
   }
-  _createCommandPromise(o, a, t) {
-    var e = this;
-    return new Promise((r, n) => {
-      e.port.write(':0 ' + o + ' ' + a + '\r'),
-        t ||
-          (t = e => {
-            var t = e.toString();
-            if (t.startsWith('OK')) return r();
-            n(Error('CMD: ' + o + ' ' + a + ', Unexpected response: ' + t));
-          }),
-        e.bus.once('command-response', e => {
-          return t(e);
-        });
+  _createCommandPromise(o, a) {
+    return new Promise((resolve, reject) => {
+      this.port.write(':0 ' + o + ' ' + a + '\r');
+      this.bus.once('command-response', e => {
+        const res = e.toString();
+        if (res.startsWith('OK')) {
+          return resolve();
+        }
+        reject(new Error('CMD: ' + o + ' ' + a + ', Unexpected response: ' + res));
+      });
     });
   }
 
   _onShutdownRequested() {
-    var r = this;
-    return new Promise(t => {
-      r.commandMode = !0;
-      setTimeout(function e() {
-        r._createCommandPromise('CRE', '0000')
+    return new Promise(resolve => {
+      this.commandMode = true;
+      const creCommand = () => {
+        this._createCommandPromise('CRE', '0000')
           .then(() => {
-            t();
+            resolve();
           })
           .catch(() => {
-            r.log('[_onShutdownRequested] error retry...'), setTimeout(e, 100);
+            this.log('[_onShutdownRequested] error retry...');
+            setTimeout(creCommand, 100);
           });
-      }, 0);
+      };
+      setTimeout(creCommand, 0);
     }).then(() => {
-      return r._createCommandPromise('SRS', '0000');
+      return this._createCommandPromise('SRS', '0000');
     });
   }
 
