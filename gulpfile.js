@@ -137,7 +137,7 @@ gulp.task('html', () => {
     .pipe(gulp.dest('./dist'));
 });
 
-gulp.task('build', gulp.series('lint', 'js', 'less', 'html', 'assets'));
+gulp.task('build', gulp.series(/* 'lint', */ 'js', 'less', 'html', 'assets'));
 
 gulp.task('testAssets', () => {
   return gulp
