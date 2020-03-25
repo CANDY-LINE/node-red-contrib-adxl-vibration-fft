@@ -32,6 +32,7 @@ const yaml = require("gulp-yaml");
 
 const minified = process.env.NODE_ENV !== "development";
 const sourcemapEnabled = !minified;
+console.log(`[INFO] minified: ${minified}`);
 
 gulp.task("lint", () => {
   return gulp
@@ -172,8 +173,7 @@ gulp.task(
           reporter: "spec"
         })
       )
-      .once("error", () => process.exit(1))
-      .once("end", () => process.exit());
+      .once("error", () => process.exit(1));
   })
 );
 
