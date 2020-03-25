@@ -111,7 +111,7 @@ export default function(RED) {
   RED.nodes.registerType('ADXL100x FFT', ADXL100xFFTNode);
 
   class ADXL100xFFTInNode {
-    consttructor(t) {
+    constructor(t) {
       RED.nodes.createNode(this, t);
       this.name = t.name;
       this.input = true;
