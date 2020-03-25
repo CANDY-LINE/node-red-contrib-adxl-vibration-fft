@@ -41,16 +41,14 @@ export default function(RED) {
       this.enabled = !!t.enabled;
       this.emitFftValues = !!t.emitFftValues;
       this.nodes = {};
-      ['connected', 'disconnected', 'error'].forEach(i => {
-        this.on(i, () => {
-          for (var e = arguments.length, t = Array(e), n = 0; n < e; n++)
-            t[n] = arguments[n];
+      ['connected', 'disconnected', 'error'].forEach(event => {
+        this.on(event, () => {
           try {
             Object.keys(this.nodes).forEach(e => {
-              this.nodes[e].emit(i, t);
+              this.nodes[e].emit(event);
             });
-          } catch (e) {
-            this.error(e);
+          } catch (err) {
+            this.error(err);
           }
         });
       });
@@ -67,18 +65,17 @@ export default function(RED) {
           this.error(e);
         }
       });
-      this.on('close', t => {
-        return (
-          delete o[this.serialport],
-          this.client
-            .shutdown()
-            .then(() => {
-              t();
-            })
-            .catch(e => {
-              this.log(e), t();
-            })
-        );
+      this.on('close', done => {
+        delete o[this.serialport];
+        this.client
+          .shutdown()
+          .then(() => {
+            done();
+          })
+          .catch(e => {
+            this.log(e);
+            done();
+          });
       });
       this.operations = {
         register: e => {
@@ -144,7 +141,9 @@ export default function(RED) {
           });
         });
         this.on('close', () => {
-          this.adxl100xFFTNode && this.adxl100xFFTNode.operations.remove(this);
+          if (this.adxl100xFFTNode) {
+            this.adxl100xFFTNode.operations.remove(this);
+          }
         });
         this.adxl100xFFTNode.operations.register(this);
       }
