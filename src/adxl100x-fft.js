@@ -17,7 +17,7 @@
 "use strict";
 import "source-map-support/register";
 import SerialPort from "serialport";
-import { ADXL100zFFTClient } from "./adxl100x-fft-client";
+import { ADXL100xFFTClient } from "./adxl100x-fft-client";
 
 export default function(RED) {
   const o = {};
@@ -97,7 +97,7 @@ export default function(RED) {
           return this.client.shutdown();
         }
       };
-      this.client = new ADXL100zFFTClient(this);
+      this.client = new ADXL100xFFTClient(this);
       if (this.enabled) {
         o[this.serialport] = this.client;
         this.client.start().catch(e => {

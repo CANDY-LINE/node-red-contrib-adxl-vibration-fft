@@ -19,7 +19,7 @@ import "source-map-support/register";
 import { EventEmitter } from "events";
 import SerialPort from "serialport";
 
-export class ADXL100zFFTClient {
+export class ADXL100xFFTClient {
   constructor(e = {}) {
     this.serialport = e.serialport;
     this.log = e.log ? e.log.bind(e) : console.log;

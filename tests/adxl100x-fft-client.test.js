@@ -20,14 +20,14 @@
 import 'source-map-support/register';
 import * as sinon from 'sinon';
 import { assert } from 'chai';
-import { ADXL100zFFTClient } from '../dist/adxl100x-fft-client';
+import { ADXL100xFFTClient } from '../dist/adxl100x-fft-client';
 
-describe('ADXL100zFFTClient', () => {
+describe('ADXL100xFFTClient', () => {
   let testData;
   let client;
   before(() => {
     testData = require('./fft-data-001.json');
-    client = new ADXL100zFFTClient();
+    client = new ADXL100xFFTClient();
   });
   it('should parse notifyBuf for XFD command', () => {
     let cmd = client._parseNotifyBuf(Buffer.from(testData[0].notify_buf, 'hex'));
