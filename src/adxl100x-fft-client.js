@@ -81,40 +81,39 @@ export class ADXL100xFFTClient {
   }
 
   _onInitCompleted() {
-    var e = this;
     return this._createCommandPromise('CPS', '0000')
       .then(() => {
-        return e._createUartCommandPromise('RMC', '0000');
+        return this._createUartCommandPromise('RMC', '0000');
       })
       .then(() => {
-        return e._createUartCommandPromise('RRP', '001s');
+        return this._createUartCommandPromise('RRP', '001s');
       })
       .then(() => {
-        return e._createUartCommandPromise('BSZ', '0000');
+        return this._createUartCommandPromise('BSZ', '0000');
       })
       .then(() => {
-        return e._createUartCommandPromise('DFA', '0001');
+        return this._createUartCommandPromise('DFA', '0001');
       })
       .then(() => {
-        return e._createUartCommandPromise('AL1', '0002');
+        return this._createUartCommandPromise('AL1', '0002');
       })
       .then(() => {
-        return e._createUartCommandPromise('AH1', '0800');
+        return this._createUartCommandPromise('AH1', '0800');
       })
       .then(() => {
-        return e._createUartCommandPromise('AL8', '0300');
+        return this._createUartCommandPromise('AL8', '0300');
       })
       .then(() => {
-        return e._createUartCommandPromise('AH8', '0600');
+        return this._createUartCommandPromise('AH8', '0600');
       })
       .then(() => {
-        return e._createUartCommandPromise('AC8', '0003');
+        return this._createUartCommandPromise('AC8', '0003');
       })
       .then(() => {
-        return e._createCommandPromise('CRS', '0000');
+        return this._createCommandPromise('CRS', '0000');
       })
       .then(() => {
-        return e._onFftReady();
+        return this._onFftReady();
       });
   }
 
