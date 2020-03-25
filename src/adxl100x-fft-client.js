@@ -118,7 +118,6 @@ export class ADXL100xFFTClient {
   }
 
   _onFftReady() {
-    let n = this;
     this.commandMode = !1;
     this.fftHeaderInProgress = true;
     this.fftHeader = null;
@@ -126,45 +125,51 @@ export class ADXL100xFFTClient {
     this.debug('[_onFftReady] OK');
     this.bus.on('fft', e => {
       for (; 0 < e.length; ) {
-        if (n.fftHeaderInProgress) {
-          n.fftHeader = n.fftHeader || Buffer.from([]);
-          let t = n.fftHeader.length;
+        if (this.fftHeaderInProgress) {
+          this.fftHeader = this.fftHeader || Buffer.from([]);
+          const t = this.fftHeader.length;
           if (
-            ((n.fftHeader = Buffer.concat([n.fftHeader, e.slice(0, 12 - t)])),
-            12 !== n.fftHeader.length)
+            ((this.fftHeader = Buffer.concat([
+              this.fftHeader,
+              e.slice(0, 12 - t)
+            ])),
+            12 !== this.fftHeader.length)
           ) {
             return;
           }
-          n.fftBodySize = 256 * n.fftHeader[9] + n.fftHeader[10] + 4;
-          n.debug(
+          this.fftBodySize = 256 * this.fftHeader[9] + this.fftHeader[10] + 4;
+          this.debug(
             'FFT header => [' +
-              n.fftHeader.toString() +
+              this.fftHeader.toString() +
               '], [' +
-              n.fftHeader.toString('hex') +
+              this.fftHeader.toString('hex') +
               ']'
           );
-          n.debug('FFT body size => ' + n.fftBodySize);
-          n.fftHeaderInProgress = !1;
-          n.fftBody = Buffer.from([]);
+          this.debug('FFT body size => ' + this.fftBodySize);
+          this.fftHeaderInProgress = !1;
+          this.fftBody = Buffer.from([]);
           e = e.slice(12 - t);
         }
-        let r = n.fftBodySize - n.fftBody.length;
-        (n.fftBody = Buffer.concat([n.fftBody, e.slice(0, r)])),
-          (e = e.slice(r)),
-          n.fftBody.length === n.fftBodySize &&
-            (n.bus.emit('fft-data-arrived', {
-              header: n._parseNotifyBuf(n.fftHeader),
-              body: n._parseDataBuf(n.fftBody)
-            }),
-            (n.fftHeaderInProgress = true),
-            (n.fftHeader = null),
-            (n.fftBody = null),
-            (n.fftBodySize = 0));
+        const r = this.fftBodySize - this.fftBody.length;
+        this.fftBody = Buffer.concat([this.fftBody, e.slice(0, r)]);
+        e = e.slice(r);
+        if (this.fftBody.length === this.fftBodySize) {
+          this.bus.emit('fft-data-arrived', {
+            header: this._parseNotifyBuf(this.fftHeader),
+            body: this._parseDataBuf(this.fftBody)
+          });
+          this.fftHeaderInProgress = true;
+          this.fftHeader = null;
+          this.fftBody = null;
+          this.fftBodySize = 0;
+        }
       }
     });
     this.bus.on('fft-data-arrived', e => {
-      n.debug('[fft-data-arrived] command => ' + e.header.command),
-        'XFD' === e.header.command && n.bus.emit('data', e.body);
+      this.debug('[fft-data-arrived] command => ' + e.header.command);
+      if ('XFD' === e.header.command) {
+        this.bus.emit('data', e.body);
+      }
     });
   }
 
