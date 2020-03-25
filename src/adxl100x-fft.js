@@ -122,7 +122,7 @@ export default function(RED) {
       if (this.adxl100xFFTNode) {
         this.on('connected', () => {
           const e =
-            0 < arguments.length && void 0 !== arguments[0] ? arguments[0] : 0;
+            0 < arguments.length && null !== arguments[0] ? arguments[0] : 0;
           this.status({
             fill: 'green',
             shape: 'dot',

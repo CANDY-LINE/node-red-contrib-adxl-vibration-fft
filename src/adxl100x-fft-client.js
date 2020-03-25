@@ -195,7 +195,7 @@ export class ADXL100xFFTClient {
           o.closed = !1;
           o.commandMode = true;
           o.debug('Serial port (' + o.serialport + ') is now open.');
-          let t = void 0;
+          let t = null;
           t = setTimeout(function e() {
             o.port.write('\r'), (t = setTimeout(e, 100));
           }, 100);
@@ -204,7 +204,7 @@ export class ADXL100xFFTClient {
             return clearTimeout(t), n(e);
           });
         });
-        let r = void 0;
+        let r = null;
         o.port.on('data', e => {
           o.commandMode
             ? ((r = r || Buffer.from([])),
@@ -304,7 +304,7 @@ export class ADXL100xFFTClient {
     for (
       let t = e[0] + 256 * e[1] + 65536 * e[2] + 16777216 * e[3],
         r = [],
-        n = void 0,
+        n = null,
         o = 8;
       o < 20;
       o += 3
@@ -317,7 +317,7 @@ export class ADXL100xFFTClient {
         r.push({
           frequency: n
         });
-    for (let a = void 0, i = void 0, u = 0; u < 8; u++)
+    for (let a = null, i = null, u = 0; u < 8; u++)
       (i =
         ((((1 - 2 * ((128 & (a = e[21 + 2 * u])) >> 7)) *
           Math.pow(2, (124 & a) >> 2)) /
@@ -325,7 +325,7 @@ export class ADXL100xFFTClient {
           (1024 + 256 * (3 & a) + e[20 + 2 * u])) /
         1024),
         (r[u].amplitude = i);
-    let f = void 0;
+    let f = null;
     if (this.emitFftValues) {
       f = Array(800);
       for (let s = 0; s < 800; s++) {
