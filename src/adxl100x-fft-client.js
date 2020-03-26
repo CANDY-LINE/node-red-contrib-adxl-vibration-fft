@@ -68,7 +68,7 @@ export class ADXL100xFFTClient {
     });
   }
 
-  _onShutdownRequested() {
+  _onStopRequested() {
     return new Promise(resolve => {
       this.commandMode = true;
       const creCommand = () => {
@@ -82,7 +82,11 @@ export class ADXL100xFFTClient {
           });
       };
       setTimeout(creCommand, 0);
-    }).then(() => {
+    });
+  }
+
+  _onShutdownRequested() {
+    return this._onStopRequested().then(() => {
       return this._createCommandPromise('SRS', '0000');
     });
   }
@@ -226,7 +230,28 @@ export class ADXL100xFFTClient {
   start() {
     return this._openSerialPort().then(e => {
       this.debug(`[initialMessage]\n${hexdump(e)}`);
-      return this._onInitCompleted();
+      return new Promise((resolve, reject) => {
+        let trial = 0;
+        const init = () => {
+          this.debug(`[start] initialzing parameters...`);
+          this._onInitCompleted()
+            .then(resolve)
+            .catch(err => {
+              this.debug(
+                `[start] Error while initialzing: trial=${trial}, err=${err.message ||
+                  err}`
+              );
+              if (trial > 3) {
+                return reject(err);
+              }
+              this._onStopRequested().finally(() => {
+                setTimeout(init, 100);
+                ++trial;
+              });
+            });
+        };
+        process.nextTick(init);
+      });
     });
   }
 
