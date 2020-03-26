@@ -31,22 +31,22 @@ describe('ADXL100xFFTClient', () => {
     client = new ADXL100xFFTClient();
   });
   it('should parse notifyBuf for XFD command', () => {
-    let cmd = client._parseNotifyBuf(Buffer.from(testData[0].notify_buf, 'hex'));
+    const cmd = client._parseNotifyBuf(Buffer.from(testData[0].notify_buf, 'hex'));
     assert.equal('XFD', cmd.command);
     assert.equal(4096, cmd.size);
   });
   it('should parse dataBuf (1)', () => {
-    let data = client._parseDataBuf(Buffer.from(testData[0].data_buf, 'hex'));
+    const data = client._parseDataBuf(Buffer.from(testData[0].data_buf, 'hex'));
     assert.equal(testData[0]['Peak Freq 1'], data.peaks[0].frequency);
     assert.equal(testData[0]['Peak Value 1'], data.peaks[0].amplitude);
     assert.equal(testData[0]['Peak Freq 8'], data.peaks[7].frequency);
     assert.equal(testData[0]['Peak Value 8'], data.peaks[7].amplitude);
   });
   it('should parse dataBuf (2)', () => {
-    let data = client._parseDataBuf(Buffer.from(testData[1].data_buf, 'hex'));
+    const data = client._parseDataBuf(Buffer.from(testData[1].data_buf, 'hex'));
     assert.equal(testData[1]['Peak Freq 1'], data.peaks[0].frequency);
     assert.equal(testData[1]['Peak Value 1'], data.peaks[0].amplitude);
     assert.equal(testData[1]['Peak Freq 8'], data.peaks[7].frequency);
     assert.equal(testData[1]['Peak Value 8'], data.peaks[7].amplitude);
-  });
+  });  
 });
