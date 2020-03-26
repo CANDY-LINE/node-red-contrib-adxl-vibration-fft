@@ -36,6 +36,7 @@ describe('ADXL100xFFT node', () => {
     RED.events = sandbox.stub(new EventEmitter());
     RED.nodes = {
       createNode: () => {},
+      getNode: () => {},
       registerType: (n, t) => {
         types[n] = t;
         t.prototype = sandbox.stub({
