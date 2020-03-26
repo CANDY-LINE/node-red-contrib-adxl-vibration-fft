@@ -362,8 +362,8 @@ export class ADXL100xFFTClient {
     }
     let f = null;
     if (this.emitFftValues) {
-      f = Array(800);
-      for (let s = 0; s < 800; s++) {
+      f = Array(2030);
+      for (let s = 0; s < 2030; s++) {
         let c = 36 + 2 * s;
         f[s] = this._byte2binary16(e[c] + 256 * e[c + 1]);
       }
