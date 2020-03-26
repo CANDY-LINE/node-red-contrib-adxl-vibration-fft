@@ -132,7 +132,7 @@ export class ADXL100xFFTClient {
   }
 
   _onFftReady() {
-    this.commandMode = !1;
+    this.commandMode = false;
     this.fftHeaderInProgress = true;
     this.fftHeader = null;
     this.bus.emit('connected');
@@ -154,7 +154,7 @@ export class ADXL100xFFTClient {
           this.fftBodySize = 256 * this.fftHeader[9] + this.fftHeader[10] + 4;
           this.debug(`[FFT header]\n${hexdump(this.fftHeader)}`);
           this.debug(`FFT body size => ${this.fftBodySize}`);
-          this.fftHeaderInProgress = !1;
+          this.fftHeaderInProgress = false;
           this.fftBody = Buffer.from([]);
           e = e.slice(12 - t);
         }
@@ -199,7 +199,7 @@ export class ADXL100xFFTClient {
           this.bus.emit('error');
         });
         this.port.on('open', () => {
-          this.closed = !1;
+          this.closed = false;
           this.commandMode = true;
           this.debug('Serial port (' + this.serialport + ') is now open.');
           let timer = null;
