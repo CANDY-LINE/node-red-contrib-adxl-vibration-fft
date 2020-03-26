@@ -52,14 +52,14 @@ export class ADXL100xFFTClient {
 
   _createCommandPromise(o, a) {
     return new Promise((resolve, reject) => {
-      this.port.write(':0 ' + o + ' ' + a + '\r');
+      this.port.write(`:0 ${o} ${a}\r`);
       this.bus.once('command-response', e => {
         const res = e.toString();
         if (res.startsWith('OK')) {
           return resolve();
         }
         reject(
-          new Error('CMD: ' + o + ' ' + a + ', Unexpected response: ' + res)
+          new Error(`CMD: ${o} ${a}, Unexpected response:\n${hexdump(res)}`)
         );
       });
     });
