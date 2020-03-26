@@ -58,9 +58,16 @@ export default function(RED) {
         try {
           Object.keys(this.nodes).forEach(e => {
             if (this.nodes[e].input) {
-              const t = parseInt(this.nodes[e].numOfPeaks || 0);
-              const n = this.nodes[e].payloadFormat;
-              this.nodes[e].send(this.client.format(i, this.identifier, t, n));
+              const numOfPeaks = parseInt(this.nodes[e].numOfPeaks || 0);
+              const { payloadFormat } = this.nodes[e];
+              this.nodes[e].send(
+                this.client.format(
+                  i,
+                  this.identifier,
+                  numOfPeaks,
+                  payloadFormat
+                )
+              );
             }
           });
         } catch (e) {
