@@ -38,8 +38,8 @@ export class ADXL100xFFTClient {
       this.bus = e;
     } else {
       this.bus = e.bus || new EventEmitter();
-      this.emitFftValues = e.emitFftValues;
     }
+    this.emitFftValues = e.emitFftValues;
     this.closed = true;
     this.frequencyLabels = [];
     for (let t = 0; t < SAMPLES; t++) {
