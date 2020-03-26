@@ -66,5 +66,11 @@ describe('ADXL100xFFTClient', () => {
         assert.closeTo(f, expectedFftValues[i], 0.001);
       });
     });
+    it('should convert a valid value', () => {
+      const expectedFftValues = testData[0].fft_decoded;
+      const data = client._parseDataBuf(Buffer.from(testData[0].data_buf, 'hex'));
+      const { payload } = client.format(data, 'topic', 1, 'chart');
+      assert.equal(payload[0].data[0].length, payload[0].data[1].length);
+    });
   });
 });
