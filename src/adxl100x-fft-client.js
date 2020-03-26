@@ -21,6 +21,7 @@
 import 'source-map-support/register';
 import { EventEmitter } from 'events';
 import SerialPort from 'serialport';
+import hexdump from 'hexdump-nodejs';
 
 export class ADXL100xFFTClient {
   constructor(e = {}) {
@@ -141,14 +142,9 @@ export class ADXL100xFFTClient {
             return;
           }
           this.fftBodySize = 256 * this.fftHeader[9] + this.fftHeader[10] + 4;
-          this.debug(
-            'FFT header => [' +
-              this.fftHeader.toString() +
-              '], [' +
-              this.fftHeader.toString('hex') +
-              ']'
+          this.debug(`[FFT header]\n${hexdump(this.fftHeader)}`
           );
-          this.debug('FFT body size => ' + this.fftBodySize);
+          this.debug(`FFT body size => ${this.fftBodySize}`);
           this.fftHeaderInProgress = !1;
           this.fftBody = Buffer.from([]);
           e = e.slice(12 - t);
@@ -223,11 +219,9 @@ export class ADXL100xFFTClient {
   }
 
   start() {
-    let r = this;
     return this._openSerialPort().then(e => {
-      let t = e.toString();
-      r.debug('initialMessage => ' + t);
-      return r._onInitCompleted();
+      this.debug(`[initialMessage]\n${hexdump(e)}`);
+      return this._onInitCompleted();
     });
   }
 
