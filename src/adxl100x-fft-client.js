@@ -23,6 +23,8 @@ import { EventEmitter } from 'events';
 import SerialPort from 'serialport';
 import hexdump from 'hexdump-nodejs';
 
+const SAMPLES = 800; // up to 2030
+
 export class ADXL100xFFTClient {
   constructor(e = {}) {
     this.serialport = e.serialport;
@@ -39,8 +41,8 @@ export class ADXL100xFFTClient {
     }
     this.closed = true;
     this.frequencyLabels = [];
-    for (let t = 0; t < 800; t++) {
-      this.frequencyLabels.push(Math.floor((20 * t) / 799) + 'kHz');
+    for (let t = 0; t < SAMPLES; t++) {
+      this.frequencyLabels.push(Math.floor((20 * t) / (SAMPLES - 1)) + 'kHz');
     }
   }
 
@@ -362,8 +364,8 @@ export class ADXL100xFFTClient {
     }
     let f = null;
     if (this.emitFftValues) {
-      f = Array(2030);
-      for (let s = 0; s < 2030; s++) {
+      f = Array(SAMPLES);
+      for (let s = 0; s < SAMPLES; s++) {
         let c = 36 + 2 * s;
         f[s] = this._byte2binary16(e[c] + 256 * e[c + 1]);
       }
@@ -401,7 +403,7 @@ export class ADXL100xFFTClient {
         'chart' === n &&
           i.forEach((e, t) => {
             u.push('Peak' + (t + 1));
-            let r = Array(800).fill(0);
+            let r = Array(SAMPLES).fill(0);
             (r[e.frequency] = o._convertAmp(e.amplitude) + 10), f.push(r);
           }),
           (a.payload = [
