@@ -142,8 +142,7 @@ export class ADXL100xFFTClient {
             return;
           }
           this.fftBodySize = 256 * this.fftHeader[9] + this.fftHeader[10] + 4;
-          this.debug(`[FFT header]\n${hexdump(this.fftHeader)}`
-          );
+          this.debug(`[FFT header]\n${hexdump(this.fftHeader)}`);
           this.debug(`FFT body size => ${this.fftBodySize}`);
           this.fftHeaderInProgress = !1;
           this.fftBody = Buffer.from([]);
