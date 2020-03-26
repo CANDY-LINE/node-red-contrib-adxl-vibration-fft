@@ -61,7 +61,7 @@ describe('ADXL100xFFTClient', () => {
     it('should parse dataBuf and output raw data', () => {
       const expectedFftValues = testData[0].fft_decoded;
       const data = client._parseDataBuf(Buffer.from(testData[0].data_buf, 'hex'));
-      assert.equal(data.raw.length, expectedFftValues.length);
+      assert.equal(data.raw.length, ADXL100xFFTClient.SAMPLES);
       data.raw.forEach((f, i) => {
         assert.closeTo(f, expectedFftValues[i], 0.001);
       });

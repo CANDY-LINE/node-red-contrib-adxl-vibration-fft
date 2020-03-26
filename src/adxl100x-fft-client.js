@@ -26,6 +26,7 @@ import hexdump from 'hexdump-nodejs';
 const SAMPLES = 800; // up to 2030
 
 export class ADXL100xFFTClient {
+  static get SAMPLES() { return SAMPLES; }
   constructor(e = {}) {
     this.serialport = e.serialport;
     this.log = e.log ? e.log.bind(e) : console.log;
