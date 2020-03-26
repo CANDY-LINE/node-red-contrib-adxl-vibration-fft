@@ -175,49 +175,48 @@ export class ADXL100xFFTClient {
   }
 
   _openSerialPort() {
-    let o = this;
     return new Promise(n => {
       const t = () => {
-        o.port = new SerialPort(o.serialport, {
+        this.port = new SerialPort(this.serialport, {
           baudRate: 230400
         });
-        o.port.on('close', () => {
-          o.bus.emit('disconnected'), (o.closed = true);
+        this.port.on('close', () => {
+          this.bus.emit('disconnected'), (this.closed = true);
         });
-        o.port.on('error', e => {
-          o.debug('[error] ' + e.stack);
-          o.closed &&
-            o.port.close(() => {
-              o.log('[info] trying to re-connect'), setTimeout(t, 5e3);
+        this.port.on('error', e => {
+          this.debug('[error] ' + e.stack);
+          this.closed &&
+            this.port.close(() => {
+              this.log('[info] trying to re-connect'), setTimeout(t, 5e3);
             });
-          o.bus.emit('error');
+          this.bus.emit('error');
         });
-        o.port.on('open', () => {
-          o.closed = !1;
-          o.commandMode = true;
-          o.debug('Serial port (' + o.serialport + ') is now open.');
+        this.port.on('open', () => {
+          this.closed = !1;
+          this.commandMode = true;
+          this.debug('Serial port (' + this.serialport + ') is now open.');
           let timer = null;
           const ping = () => {
-            o.port.write('\r');
+            this.port.write('\r');
             timer = setTimeout(ping, 100);
           };
           timer = setTimeout(ping, 100);
-          o.port.write('\r');
-          o.bus.once('command-response', e => {
+          this.port.write('\r');
+          this.bus.once('command-response', e => {
             clearTimeout(timer);
             return n(e);
           });
         });
         let r = null;
-        o.port.on('data', e => {
-          o.commandMode
+        this.port.on('data', e => {
+          this.commandMode
             ? ((r = r || Buffer.from([])),
               (1 < (r = Buffer.concat([r, e])).length &&
                 10 === r[r.length - 2]) ||
               13 === r[r.length - 1]
-                ? (o.bus.emit('command-response', r), (r = null))
-                : o.bus.emit('command-response-data', e))
-            : o.bus.emit('fft', e);
+                ? (this.bus.emit('command-response', r), (r = null))
+                : this.bus.emit('command-response-data', e))
+            : this.bus.emit('fft', e);
         });
       };
       setTimeout(t, 0);
