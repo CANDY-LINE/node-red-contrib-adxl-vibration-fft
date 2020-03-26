@@ -196,13 +196,16 @@ export class ADXL100xFFTClient {
           o.closed = !1;
           o.commandMode = true;
           o.debug('Serial port (' + o.serialport + ') is now open.');
-          let t = null;
-          t = setTimeout(function e() {
-            o.port.write('\r'), (t = setTimeout(e, 100));
-          }, 100);
+          let timer = null;
+          const ping = () => {
+            o.port.write('\r');
+            timer = setTimeout(ping, 100);
+          };
+          timer = setTimeout(ping, 100);
           o.port.write('\r');
           o.bus.once('command-response', e => {
-            return clearTimeout(t), n(e);
+            clearTimeout(timer);
+            return n(e);
           });
         });
         let r = null;
