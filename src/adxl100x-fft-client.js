@@ -177,7 +177,7 @@ export class ADXL100xFFTClient {
   _openSerialPort() {
     let o = this;
     return new Promise(n => {
-      setTimeout(function t() {
+      const t = () => {
         o.port = new SerialPort(o.serialport, {
           baudRate: 230400
         });
@@ -216,7 +216,8 @@ export class ADXL100xFFTClient {
                 : o.bus.emit('command-response-data', e))
             : o.bus.emit('fft', e);
         });
-      }, 0);
+      };
+      setTimeout(t, 0);
     });
   }
 
