@@ -299,29 +299,28 @@ export class ADXL100xFFTClient {
     if (!e) {
       throw new Error('No input!');
     }
-    Array.isArray(e)
-      ? (e = Buffer.from(e))
-      : Buffer.isBuffer(e) || (e = Buffer.from(e.toString()));
-    for (
-      let t = e[0] + 256 * e[1] + 65536 * e[2] + 16777216 * e[3],
-        r = [],
-        n = null,
-        o = 8;
-      o < 20;
-      o += 3
-    ) {
-      (n = ((15 & e[o + 1]) << 8) + e[o]),
-        r.push({
-          frequency: n
-        }),
-        (n = (e[o + 2] << 4) + ((240 & e[o + 1]) >> 4)),
-        r.push({
-          frequency: n
-        });
+    if (Array.isArray(e)) {
+      e = Buffer.from(e);
+    } else if (!Buffer.isBuffer(e)) {
+      e = Buffer.from(e.toString());
     }
-      
-    for (let a = null, i = null, u = 0; u < 8; u++)
-     {
+    let t = e[0] + 256 * e[1] + 65536 * e[2] + 16777216 * e[3];
+    let r = [];
+    let n = null;
+    for (let o = 8; o < 20; o += 3) {
+      n = ((15 & e[o + 1]) << 8) + e[o];
+      r.push({
+        frequency: n
+      });
+      n = (e[o + 2] << 4) + ((240 & e[o + 1]) >> 4);
+      r.push({
+        frequency: n
+      });
+    }
+
+    let a = null;
+    let i = null;
+    for (let u = 0; u < 8; u++) {
       (i =
         ((((1 - 2 * ((128 & (a = e[21 + 2 * u])) >> 7)) *
           Math.pow(2, (124 & a) >> 2)) /
@@ -329,7 +328,7 @@ export class ADXL100xFFTClient {
           (1024 + 256 * (3 & a) + e[20 + 2 * u])) /
         1024),
         (r[u].amplitude = i);
-     }
+    }
     let f = null;
     if (this.emitFftValues) {
       f = Array(800);
