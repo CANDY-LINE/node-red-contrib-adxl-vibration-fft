@@ -70,6 +70,7 @@
     "fsevents": "^2.1.2"
   },
   "dependencies": {
+    "hexdump-nodejs": "^0.1.0",
     "serialport": "^8.0.6",
     "source-map-support": "^0.5.4"
   },
