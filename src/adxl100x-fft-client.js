@@ -382,15 +382,15 @@ export class ADXL100xFFTClient {
     return 20 * Math.log10(e) - 34;
   }
 
-  format(e, t, r, n) {
+  format(e, topic, r, payloadFormat) {
     let o = this,
       a = {
         timestamp: e.timestamp,
-        topic: t
+        topic
       };
     r < 0 ? (r = 0) : 8 < r && (r = 8);
     let i = e.peaks.slice(0, r);
-    switch (n) {
+    switch (payloadFormat) {
       case 'chart':
       case 'chartWithoutPeak':
         let u = ['FFT'],
@@ -401,7 +401,7 @@ export class ADXL100xFFTClient {
                 })
               : []
           ];
-        'chart' === n &&
+        'chart' === payloadFormat &&
           i.forEach((e, t) => {
             u.push('Peak' + (t + 1));
             let r = Array(SAMPLES).fill(0);
