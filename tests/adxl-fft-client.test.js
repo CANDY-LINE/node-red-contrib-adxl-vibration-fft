@@ -21,7 +21,7 @@
 
 import 'source-map-support/register';
 import { assert } from 'chai';
-import { ADXL100xFFTClient } from '../dist/adxl100x-fft-client';
+import { ADXL100xFFTClient } from '../dist/adxl-fft-client';
 
 describe('ADXL100xFFTClient', () => {
   let testData;

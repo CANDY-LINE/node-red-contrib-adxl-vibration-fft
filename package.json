@@ -78,7 +78,7 @@
   },
   "node-red": {
     "nodes": {
-      "adxl100x-fft": "dist/adxl100x-fft.js"
+      "adxl-fft": "dist/adxl-fft.js"
     }
   }
 }

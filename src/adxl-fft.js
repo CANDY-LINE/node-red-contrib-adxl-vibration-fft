@@ -17,7 +17,7 @@
 'use strict';
 import 'source-map-support/register';
 import SerialPort from 'serialport';
-import { ADXL100xFFTClient } from './adxl100x-fft-client';
+import { ADXL100xFFTClient } from './adxl-fft-client';
 
 export default function(RED) {
   const o = {};
@@ -135,7 +135,7 @@ export default function(RED) {
           this.status({
             fill: 'green',
             shape: 'dot',
-            text: RED._('adxl100x-fft.status.connected', {
+            text: RED._('adxl-fft.status.connected', {
               n: e
             })
           });
@@ -145,7 +145,7 @@ export default function(RED) {
             this.status({
               fill: 'red',
               shape: 'ring',
-              text: 'adxl100x-fft.status.' + e
+              text: 'adxl-fft.status.' + e
             });
           });
         });
@@ -161,7 +161,7 @@ export default function(RED) {
   RED.nodes.registerType('ADXL100x FFT in', ADXL100xFFTInNode);
 
   RED.httpAdmin.get(
-    '/adxl100x-fft-ports',
+    '/adxl-fft-ports',
     RED.auth.needsPermission('serial.read'),
     (req, res) => {
       SerialPort.list()

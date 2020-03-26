@@ -9,26 +9,26 @@
   <div class="form-row node-input-adxl100xFFT">
     <label for="node-input-adxl100xFFT">
       <i class="fa fa-plug"></i>
-      <span data-i18n="adxl100x-fft.label.adxl100xFFT"></span></label>
+      <span data-i18n="adxl-fft.label.adxl100xFFT"></span></label>
     <input type="text" id="node-input-adxl100xFFT">
   </div>
   <div class='form-row'>
     <label for='node-input-numOfPeaks'>
       <i class='fa fa-tag'></i>
-      <span data-i18n='adxl100x-fft.label.numOfPeaks'></span>
+      <span data-i18n='adxl-fft.label.numOfPeaks'></span>
     </label>
-    <input type='text' id='node-input-numOfPeaks' data-i18n='[placeholder]adxl100x-fft.placeholder.numOfPeaks'>
+    <input type='text' id='node-input-numOfPeaks' data-i18n='[placeholder]adxl-fft.placeholder.numOfPeaks'>
   </div>
   <div class='form-row'>
     <label for='node-input-payloadFormat'>
       <i class='fa fa-feed'></i>
-      <span data-i18n='adxl100x-fft.label.payloadFormat'></span>
+      <span data-i18n='adxl-fft.label.payloadFormat'></span>
     </label>
     <select type='text' id='node-input-payloadFormat' style='width: 70%;'>
-      <option value='peak' data-i18n='adxl100x-fft.payloadFormat.peak'></option>
-      <option value='chart' data-i18n='adxl100x-fft.payloadFormat.chart'></option>
-      <option value='chartWithoutPeak' data-i18n='adxl100x-fft.payloadFormat.chartWithoutPeak'></option>
-      <option value='all' data-i18n='adxl100x-fft.payloadFormat.all'></option>
+      <option value='peak' data-i18n='adxl-fft.payloadFormat.peak'></option>
+      <option value='chart' data-i18n='adxl-fft.payloadFormat.chart'></option>
+      <option value='chartWithoutPeak' data-i18n='adxl-fft.payloadFormat.chartWithoutPeak'></option>
+      <option value='all' data-i18n='adxl-fft.payloadFormat.all'></option>
     </select>
   </div>
 </script>
@@ -59,21 +59,21 @@
   <div class="form-row">
     <label>&nbsp;</label>
     <input type="checkbox" id="node-config-input-enabled" style="display: inline-block; width: auto; vertical-align: top;">
-    <label for="node-config-input-enabled" style="width: 70%;" data-i18n="adxl100x-fft.label.enabled"></label>
+    <label for="node-config-input-enabled" style="width: 70%;" data-i18n="adxl-fft.label.enabled"></label>
   </div>
   <div class='form-row'>
     <label for='node-config-input-identifier'>
       <i class='fa fa-tag'></i>
-      <span data-i18n='adxl100x-fft.label.identifier'></span>
+      <span data-i18n='adxl-fft.label.identifier'></span>
     </label>
-    <input type='text' id='node-config-input-identifier' data-i18n='[placeholder]adxl100x-fft.placeholder.identifier'>
+    <input type='text' id='node-config-input-identifier' data-i18n='[placeholder]adxl-fft.placeholder.identifier'>
   </div>
   <div class='form-row'>
     <label for='node-config-input-serialport'>
       <i class='fa fa-random'></i>
-      <span data-i18n='adxl100x-fft.label.serialport'></span>
+      <span data-i18n='adxl-fft.label.serialport'></span>
     </label>
-    <input type='text' id='node-config-input-serialport' data-i18n='[placeholder]adxl100x-fft.placeholder.serialport' style='width:60%;'>
+    <input type='text' id='node-config-input-serialport' data-i18n='[placeholder]adxl-fft.placeholder.serialport' style='width:60%;'>
     <a id='node-config-lookup-serial' class='red-ui-button'>
       <i id='node-config-lookup-serial-icon' class='fa fa-search'></i>
     </a>
@@ -81,7 +81,7 @@
   <div class="form-row">
     <label>&nbsp;</label>
     <input type="checkbox" id="node-config-input-emitFftValues" style="display: inline-block; width: auto; vertical-align: top;">
-    <label for="node-config-input-emitFftValues" style="width: 70%;" data-i18n="adxl100x-fft.label.emitFftValues"></label>
+    <label for="node-config-input-emitFftValues" style="width: 70%;" data-i18n="adxl-fft.label.emitFftValues"></label>
   </div>
 </script>
 <script type="text/javascript">
@@ -116,7 +116,7 @@
       }),
         $("#node-config-lookup-serial").click(function() {
           $("#node-config-lookup-serial").addClass("disabled");
-          $.getJSON("adxl100x-fft-ports", function(data) {
+          $.getJSON("adxl-fft-ports", function(data) {
             $("#node-config-lookup-serial").removeClass("disabled");
             var ports = (data || []).map(function(e) {
               return e.path;

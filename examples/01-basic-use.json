@@ -204,7 +204,7 @@
         "z": "",
         "enabled": true,
         "serialport": "/dev/ttyACM0",
-        "identifier": "adxl100x-fft",
+        "identifier": "adxl-fft",
         "emitFftValues": true
     },
     {

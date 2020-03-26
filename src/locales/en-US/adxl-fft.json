@@ -1,5 +1,5 @@
 {
-  "adxl100x-fft": {
+  "adxl-fft": {
     "label": {
       "serialport": "Data I/O Port",
       "identifier": "Topic",

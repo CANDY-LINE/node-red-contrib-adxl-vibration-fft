@@ -21,7 +21,7 @@ import 'source-map-support/register';
 import * as sinon from 'sinon';
 import { assert } from 'chai';
 import EventEmitter from 'events';
-import adxl100xfftModule from '../dist/adxl100x-fft';
+import adxl100xfftModule from '../dist/adxl-fft';
 
 const RED = {};
 
