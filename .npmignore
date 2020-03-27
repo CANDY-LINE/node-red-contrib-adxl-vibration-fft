@@ -6,6 +6,7 @@ src
 tests
 .gitignore
 .npmignore
+.prettierrc
 .jshintrc
 .travis.yml
 gulpfile.js
@@ -14,5 +15,6 @@ gulpfile.js
 *.log
 .dockerignore
 .node-version
+.python-version
 *.test.js
 *.test.js.map
