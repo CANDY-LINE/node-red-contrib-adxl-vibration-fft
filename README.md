@@ -97,6 +97,9 @@ $ NODE_ENV=development npm pack
 
 # Revision History
 
+* 2.0.0
+  - Fix an issue where the node didn't work on Node-RED v1+
+
 * 1.1.1
   - Fix node definition errors
 
