@@ -31,10 +31,6 @@ The bundled example flow provides the following demonstrations:
 
 - Firmware for this node is available at [analog.com/jp](https://www.analog.com/jp/landing-pages/003/form/jp_sensor_pv_vibration.html). User registration is required.
 
-## How to use
-
-TBW
-
 # How to install
 
 ## Node-RED users
