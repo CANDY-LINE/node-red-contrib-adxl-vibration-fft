@@ -6,6 +6,8 @@ node-red-contrib-adxl-vibration-fft
 
 Node-RED nodes for Vibration Measurement using Analog Devices' [EVAL-ADXL100X Vibration Sensor Evaluation Board](http://www.analog.com/en/design-center/evaluation-hardware-and-software/evaluation-boards-kits/EVAL-ADXL100X.html) and [EV-COG-AD4050 ARM Cortex M4F MCU](http://www.analog.com/en/design-center/evaluation-hardware-and-software/evaluation-boards-kits/EV-COG-AD4050.html) with the special [firmware for FFT (Fast Fourier Transform)](https://www.analog.com/jp/landing-pages/003/form/jp_sensor_pv_vibration.html).
 
+The nodes work with other MCU boards using the same UART protocol as the above firmware as well.
+
 ![Vibration Sensor Device](images/adxl100x-sensor-device.jpg)
 
 ## Example Flow
@@ -28,10 +30,6 @@ The bundled example flow provides the following demonstrations:
 ## Software
 
 - Firmware for this node is available at [analog.com/jp](https://www.analog.com/jp/landing-pages/003/form/jp_sensor_pv_vibration.html). User registration is required.
-
-## How to use
-
-TBW
 
 # How to install
 
@@ -96,6 +94,9 @@ $ NODE_ENV=development npm pack
 - Node Icon ... [CC BY-ND 3.0](https://creativecommons.org/licenses/by-nd/3.0/) © [icon8](https://icons8.com)
 
 # Revision History
+
+* 2.0.0
+  - Fix an issue where the node didn't work on Node-RED v1+
 
 * 1.1.1
   - Fix node definition errors

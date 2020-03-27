@@ -1,11 +1,11 @@
 {
-  "adxl100x-fft": {
+  "adxl-fft": {
     "label": {
       "serialport": "Data I/O Port",
       "identifier": "Topic",
       "enabled": "Enable this config",
       "emitFftValues": "Emit all FFT values",
-      "adxl100xFFT": "ADXL100x FFT",
+      "adxl100xFFT": "ADXL FFT",
       "payloadFormat": "FFT Value Format",
       "numOfPeaks": "# of Peak Values"
     },

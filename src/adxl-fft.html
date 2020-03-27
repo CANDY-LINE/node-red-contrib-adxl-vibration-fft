@@ -1,0 +1,137 @@
+<script type="text/x-red" data-template-name="ADXL100x FFT in">
+  <div class='form-row'>
+    <label for='node-input-name'>
+      <i class='fa fa-tag'></i>
+      <span data-i18n='node-red:common.label.name'></span>
+    </label>
+    <input type='text' id='node-input-name' data-i18n='[placeholder]node-red:common.label.name'>
+  </div>
+  <div class="form-row node-input-adxl100xFFT">
+    <label for="node-input-adxl100xFFT">
+      <i class="fa fa-plug"></i>
+      <span data-i18n="adxl-fft.label.adxl100xFFT"></span></label>
+    <input type="text" id="node-input-adxl100xFFT">
+  </div>
+  <div class='form-row'>
+    <label for='node-input-numOfPeaks'>
+      <i class='fa fa-tag'></i>
+      <span data-i18n='adxl-fft.label.numOfPeaks'></span>
+    </label>
+    <input type='text' id='node-input-numOfPeaks' data-i18n='[placeholder]adxl-fft.placeholder.numOfPeaks'>
+  </div>
+  <div class='form-row'>
+    <label for='node-input-payloadFormat'>
+      <i class='fa fa-feed'></i>
+      <span data-i18n='adxl-fft.label.payloadFormat'></span>
+    </label>
+    <select type='text' id='node-input-payloadFormat' style='width: 70%;'>
+      <option value='peak' data-i18n='adxl-fft.payloadFormat.peak'></option>
+      <option value='chart' data-i18n='adxl-fft.payloadFormat.chart'></option>
+      <option value='chartWithoutPeak' data-i18n='adxl-fft.payloadFormat.chartWithoutPeak'></option>
+      <option value='all' data-i18n='adxl-fft.payloadFormat.all'></option>
+    </select>
+  </div>
+</script>
+
+<script type="text/javascript">
+  RED.nodes.registerType("ADXL100x FFT in", {
+    category: "ADI",
+    color: "#c0cccc",
+    defaults: {
+      name: { value: "" },
+      payloadFormat: { value: "peak", required: true },
+      adxl100xFFT: { type: "ADXL100x FFT", required: true },
+      numOfPeaks: { value: 1, validate: RED.validators.regex(/^[0-8]$/) }
+    },
+    inputs: 0,
+    outputs: 1,
+    icon: "fft.png",
+    align: "left",
+    label: function() {
+      return this.name || "ADXL FFT";
+    },
+    labelStyle: function() {
+      return this.name ? "node_label_italic" : "";
+    }
+  });
+</script>
+<script type="text/x-red" data-template-name="ADXL100x FFT">
+  <div class="form-row">
+    <label>&nbsp;</label>
+    <input type="checkbox" id="node-config-input-enabled" style="display: inline-block; width: auto; vertical-align: top;">
+    <label for="node-config-input-enabled" style="width: 70%;" data-i18n="adxl-fft.label.enabled"></label>
+  </div>
+  <div class='form-row'>
+    <label for='node-config-input-identifier'>
+      <i class='fa fa-tag'></i>
+      <span data-i18n='adxl-fft.label.identifier'></span>
+    </label>
+    <input type='text' id='node-config-input-identifier' data-i18n='[placeholder]adxl-fft.placeholder.identifier'>
+  </div>
+  <div class='form-row'>
+    <label for='node-config-input-serialport'>
+      <i class='fa fa-random'></i>
+      <span data-i18n='adxl-fft.label.serialport'></span>
+    </label>
+    <input type='text' id='node-config-input-serialport' data-i18n='[placeholder]adxl-fft.placeholder.serialport' style='width:60%;'>
+    <a id='node-config-lookup-serial' class='red-ui-button'>
+      <i id='node-config-lookup-serial-icon' class='fa fa-search'></i>
+    </a>
+  </div>
+  <div class="form-row">
+    <label>&nbsp;</label>
+    <input type="checkbox" id="node-config-input-emitFftValues" style="display: inline-block; width: auto; vertical-align: top;">
+    <label for="node-config-input-emitFftValues" style="width: 70%;" data-i18n="adxl-fft.label.emitFftValues"></label>
+  </div>
+</script>
+<script type="text/javascript">
+  "use strict";
+  RED.nodes.registerType("ADXL100x FFT", {
+    category: "config",
+    defaults: {
+      enabled: {
+        value: true,
+        required: true
+      },
+      serialport: {
+        value: "",
+        required: true
+      },
+      identifier: {
+        value: "",
+        required: true
+      },
+      emitFftValues: {
+        value: false,
+        required: true
+      }
+    },
+    label: function() {
+      return this.identifier || this.serialport;
+    },
+    oneditprepare: function() {
+      $("#node-config-input-serialport").blur(function() {
+        var e = $(this).val();
+        e && "string" == typeof e && $(this).val(e.trim());
+      }),
+        $("#node-config-lookup-serial").click(function() {
+          $("#node-config-lookup-serial").addClass("disabled");
+          $.getJSON("adxl-fft-ports", function(data) {
+            $("#node-config-lookup-serial").removeClass("disabled");
+            var ports = (data || []).map(function(e) {
+              return e.path;
+            });
+            $("#node-config-input-serialport")
+              .autocomplete({
+                source: ports,
+                minLength: 0,
+                close: function(event, ui) {
+                  $("#node-config-input-serialport").autocomplete("destroy");
+                }
+              })
+              .autocomplete("search", "");
+          });
+        });
+    }
+  });
+</script>
