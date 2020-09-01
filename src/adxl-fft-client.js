@@ -342,27 +342,25 @@ export class ADXL100xFFTClient {
     const timestamp = dataBuf[0] + 256 * dataBuf[1] + 65536 * dataBuf[2] + 16777216 * dataBuf[3];
     let r = [];
     let frequency = null;
-    for (let o = 8; o < 20; o += 3) {
-      frequency = ((15 & dataBuf[o + 1]) << 8) + dataBuf[o];
+    for (let i = 8; i < 20; i += 3) {
+      frequency = ((15 & dataBuf[i + 1]) << 8) + dataBuf[i];
       r.push({
         frequency
       });
-      frequency = (dataBuf[o + 2] << 4) + ((240 & dataBuf[o + 1]) >> 4);
+      frequency = (dataBuf[i + 2] << 4) + ((240 & dataBuf[i + 1]) >> 4);
       r.push({
         frequency
       });
     }
 
     let a = null;
-    let i = null;
-    for (let u = 0; u < 8; u++) {
-      (i =
-        ((((1 - 2 * ((128 & (a = dataBuf[21 + 2 * u])) >> 7)) *
+    for (let i = 0; i < 8; i++) {
+      r[i].amplitude =
+        ((((1 - 2 * ((128 & (a = dataBuf[21 + 2 * i])) >> 7)) *
           Math.pow(2, (124 & a) >> 2)) /
           32768) *
-          (1024 + 256 * (3 & a) + dataBuf[20 + 2 * u])) /
-        1024),
-        (r[u].amplitude = i);
+          (1024 + 256 * (3 & a) + dataBuf[20 + 2 * i])) /
+        1024;
     }
     let f = null;
     if (this.emitFftValues) {
