@@ -363,16 +363,16 @@ export class ADXL100xFFTClient {
           (1024 + 256 * (3 & a) + dataBuf[20 + 2 * i])) /
         1024;
     }
-    let f = null;
+    let raw = null;
     if (this.emitFftValues) {
-      f = Array(SAMPLES);
-      for (let s = 0; s < SAMPLES; s++) {
-        let c = 36 + 2 * s;
-        f[s] = this._byte2binary16(dataBuf[c] + 256 * dataBuf[c + 1]);
+      raw = Array(SAMPLES);
+      for (let i = 0; i < SAMPLES; i++) {
+        const bufIndex = 36 + 2 * i;
+        raw[i] = this._byte2binary16(dataBuf[bufIndex] + 256 * dataBuf[bufIndex + 1]);
       }
     }
     return {
-      raw: f,
+      raw,
       timestamp,
       peaks
     };
