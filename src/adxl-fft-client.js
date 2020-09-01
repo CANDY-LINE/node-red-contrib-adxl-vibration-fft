@@ -341,15 +341,15 @@ export class ADXL100xFFTClient {
     // FFT_Timestamp
     const timestamp = dataBuf[0] + 256 * dataBuf[1] + 65536 * dataBuf[2] + 16777216 * dataBuf[3];
     let r = [];
-    let n = null;
+    let frequency = null;
     for (let o = 8; o < 20; o += 3) {
-      n = ((15 & dataBuf[o + 1]) << 8) + dataBuf[o];
+      frequency = ((15 & dataBuf[o + 1]) << 8) + dataBuf[o];
       r.push({
-        frequency: n
+        frequency
       });
-      n = (dataBuf[o + 2] << 4) + ((240 & dataBuf[o + 1]) >> 4);
+      frequency = (dataBuf[o + 2] << 4) + ((240 & dataBuf[o + 1]) >> 4);
       r.push({
-        frequency: n
+        frequency
       });
     }
 
