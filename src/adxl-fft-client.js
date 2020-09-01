@@ -338,7 +338,7 @@ export class ADXL100xFFTClient {
     } else if (!Buffer.isBuffer(e)) {
       e = Buffer.from(e.toString());
     }
-    let t = e[0] + 256 * e[1] + 65536 * e[2] + 16777216 * e[3];
+    const timestamp = e[0] + 256 * e[1] + 65536 * e[2] + 16777216 * e[3];
     let r = [];
     let n = null;
     for (let o = 8; o < 20; o += 3) {
@@ -373,7 +373,7 @@ export class ADXL100xFFTClient {
     }
     return {
       raw: f,
-      timestamp: t,
+      timestamp,
       peaks: r
     };
   }
