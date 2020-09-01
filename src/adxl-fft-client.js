@@ -329,24 +329,25 @@ export class ADXL100xFFTClient {
       : (t ? -1 : 1) * Math.pow(2, r - 15) * (1 + 0.0009765625 * n);
   }
 
-  _parseDataBuf(e) {
-    if (!e) {
+  _parseDataBuf(dataBuf) {
+    if (!dataBuf) {
       throw new Error('No input!');
     }
-    if (Array.isArray(e)) {
-      e = Buffer.from(e);
-    } else if (!Buffer.isBuffer(e)) {
-      e = Buffer.from(e.toString());
+    if (Array.isArray(dataBuf)) {
+      dataBuf = Buffer.from(dataBuf);
+    } else if (!Buffer.isBuffer(dataBuf)) {
+      dataBuf = Buffer.from(dataBuf.toString());
     }
-    const timestamp = e[0] + 256 * e[1] + 65536 * e[2] + 16777216 * e[3];
+    // FFT_Timestamp
+    const timestamp = dataBuf[0] + 256 * dataBuf[1] + 65536 * dataBuf[2] + 16777216 * dataBuf[3];
     let r = [];
     let n = null;
     for (let o = 8; o < 20; o += 3) {
-      n = ((15 & e[o + 1]) << 8) + e[o];
+      n = ((15 & dataBuf[o + 1]) << 8) + dataBuf[o];
       r.push({
         frequency: n
       });
-      n = (e[o + 2] << 4) + ((240 & e[o + 1]) >> 4);
+      n = (dataBuf[o + 2] << 4) + ((240 & dataBuf[o + 1]) >> 4);
       r.push({
         frequency: n
       });
@@ -356,10 +357,10 @@ export class ADXL100xFFTClient {
     let i = null;
     for (let u = 0; u < 8; u++) {
       (i =
-        ((((1 - 2 * ((128 & (a = e[21 + 2 * u])) >> 7)) *
+        ((((1 - 2 * ((128 & (a = dataBuf[21 + 2 * u])) >> 7)) *
           Math.pow(2, (124 & a) >> 2)) /
           32768) *
-          (1024 + 256 * (3 & a) + e[20 + 2 * u])) /
+          (1024 + 256 * (3 & a) + dataBuf[20 + 2 * u])) /
         1024),
         (r[u].amplitude = i);
     }
@@ -368,7 +369,7 @@ export class ADXL100xFFTClient {
       f = Array(SAMPLES);
       for (let s = 0; s < SAMPLES; s++) {
         let c = 36 + 2 * s;
-        f[s] = this._byte2binary16(e[c] + 256 * e[c + 1]);
+        f[s] = this._byte2binary16(dataBuf[c] + 256 * dataBuf[c + 1]);
       }
     }
     return {
