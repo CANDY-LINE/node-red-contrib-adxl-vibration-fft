@@ -340,22 +340,23 @@ export class ADXL100xFFTClient {
     }
     // FFT_Timestamp
     const timestamp = dataBuf[0] + 256 * dataBuf[1] + 65536 * dataBuf[2] + 16777216 * dataBuf[3];
-    let r = [];
+    const peaks = [];  // length = 8
     let frequency = null;
+    // 2 * 4 = 8 elements
     for (let i = 8; i < 20; i += 3) {
       frequency = ((15 & dataBuf[i + 1]) << 8) + dataBuf[i];
-      r.push({
+      peaks.push({
         frequency
       });
       frequency = (dataBuf[i + 2] << 4) + ((240 & dataBuf[i + 1]) >> 4);
-      r.push({
+      peaks.push({
         frequency
       });
     }
 
     let a = null;
-    for (let i = 0; i < 8; i++) {
-      r[i].amplitude =
+    for (let i = 0; i < 8; i++) {  // 8 elements
+      peaks[i].amplitude =
         ((((1 - 2 * ((128 & (a = dataBuf[21 + 2 * i])) >> 7)) *
           Math.pow(2, (124 & a) >> 2)) /
           32768) *
@@ -373,7 +374,7 @@ export class ADXL100xFFTClient {
     return {
       raw: f,
       timestamp,
-      peaks: r
+      peaks
     };
   }
 
