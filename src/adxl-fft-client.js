@@ -47,10 +47,9 @@ export class ADXL100xFFTClient {
     }
   }
 
-  _createUartCommandPromise(e, t) {
-    return this._createCommandPromise('CPS', '0000').then(() => {
-      return this._createCommandPromise(e, t);
-    });
+  async _createUartCommandPromise(e, t) {
+    await this._createCommandPromise('CPS', '0000');
+    return this._createCommandPromise(e, t);
   }
 
   _createCommandPromise(o, a) {
@@ -94,41 +93,19 @@ export class ADXL100xFFTClient {
     });
   }
 
-  _onInitCompleted() {
-    return this._createCommandPromise('CPS', '0000')
-      .then(() => {
-        return this._createUartCommandPromise('RMC', '0000');
-      })
-      .then(() => {
-        return this._createUartCommandPromise('RRP', '001s');
-      })
-      .then(() => {
-        return this._createUartCommandPromise('BSZ', '0000');
-      })
-      .then(() => {
-        return this._createUartCommandPromise('DFA', '0001');
-      })
-      .then(() => {
-        return this._createUartCommandPromise('AL1', '0002');
-      })
-      .then(() => {
-        return this._createUartCommandPromise('AH1', '0800');
-      })
-      .then(() => {
-        return this._createUartCommandPromise('AL8', '0300');
-      })
-      .then(() => {
-        return this._createUartCommandPromise('AH8', '0600');
-      })
-      .then(() => {
-        return this._createUartCommandPromise('AC8', '0003');
-      })
-      .then(() => {
-        return this._createCommandPromise('CRS', '0000');
-      })
-      .then(() => {
-        return this._onFftReady();
-      });
+  async _onInitCompleted() {
+    await this._createCommandPromise('CPS', '0000');
+    await this._createUartCommandPromise('RMC', '0000');
+    await this._createUartCommandPromise('RRP', '001s');
+    await this._createUartCommandPromise('BSZ', '0000');
+    await this._createUartCommandPromise('DFA', '0001');
+    await this._createUartCommandPromise('AL1', '0002');
+    await this._createUartCommandPromise('AH1', '0800');
+    await this._createUartCommandPromise('AL8', '0300');
+    await this._createUartCommandPromise('AH8', '0600');
+    await this._createUartCommandPromise('AC8', '0003');
+    await this._createCommandPromise('CRS', '0000');
+    return this._onFftReady();
   }
 
   _onFftReady() {
@@ -181,8 +158,8 @@ export class ADXL100xFFTClient {
     });
   }
 
-  _openSerialPort() {
-    return new Promise(n => {
+  async _openSerialPort() {
+    await new Promise(resolve => {
       const t = () => {
         this.port = new SerialPort(this.serialport, {
           baudRate: 230400
@@ -211,7 +188,7 @@ export class ADXL100xFFTClient {
           this.port.write('\r');
           this.bus.once('command-response', e => {
             clearTimeout(timer);
-            return n(e);
+            return resolve(e);
           });
         });
         let r = null;
@@ -230,67 +207,65 @@ export class ADXL100xFFTClient {
     });
   }
 
-  start() {
-    return this._openSerialPort().then(e => {
-      this.debug(`[initialMessage]\n${hexdump(e)}`);
-      return new Promise((resolve, reject) => {
-        let trial = 0;
-        const init = () => {
-          this.debug(`[start] initialzing parameters...`);
-          this._onInitCompleted()
-            .then(resolve)
-            .catch(err => {
-              this.debug(
-                `[start] Error while initialzing: trial=${trial}, err=${err.message ||
-                  err}`
-              );
-              if (trial > 3) {
-                return reject(err);
-              }
-              this._onStopRequested().finally(() => {
-                setTimeout(init, 100);
-                ++trial;
-              });
+  async start() {
+    const e = await this._openSerialPort();
+    this.debug(`[initialMessage]\n${hexdump(e)}`);
+    return new Promise((resolve, reject) => {
+      let trial = 0;
+      const init = () => {
+        this.debug(`[start] initialzing parameters...`);
+        this._onInitCompleted()
+          .then(resolve)
+          .catch(err => {
+            this.debug(
+              `[start] Error while initialzing: trial=${trial}, err=${err.message ||
+              err}`
+            );
+            if (trial > 3) {
+              return reject(err);
+            }
+            this._onStopRequested().finally(() => {
+              setTimeout(init, 100);
+              ++trial;
             });
-        };
-        process.nextTick(init);
-      });
+          });
+      };
+      process.nextTick(init);
     });
   }
 
-  shutdown() {
+  async shutdown() {
     let r = this;
     if (this.closed) {
       return Promise.resolve();
     }
-    return (this.commandMode
+    await (this.commandMode
       ? Promise.resolve()
       : new Promise(e => {
-          r.debug('Schedule the shutdown command...'),
-            r.bus.once('data', () => {
-              return e();
-            });
-        })
-    ).then(() => {
-      return new Promise((e, t) => {
-        return r
-          ._onShutdownRequested()
-          .then(() => {
-            ['fft', 'fft-data-arrived', 'command-response'].forEach(t => {
-              r.bus.listeners(t).forEach(e => {
-                return r.bus.removeListener(t, e);
-              });
-            });
-          })
-          .then(() => {
-            r.port.close(() => {
-              return e(true);
-            });
-          })
-          .catch(e => {
-            return t(e);
+        r.debug('Schedule the shutdown command...'),
+          r.bus.once('data', () => {
+            return e();
           });
-      });
+      })
+    );
+    return new Promise((e, t) => {
+      return r
+        ._onShutdownRequested()
+        .then(() => {
+          ['fft', 'fft-data-arrived', 'command-response'].forEach(t => {
+            r.bus.listeners(t).forEach(e => {
+              return r.bus.removeListener(t, e);
+            });
+          });
+        })
+        .then(() => {
+          r.port.close(() => {
+            return e(true);
+          });
+        })
+        .catch(e_1 => {
+          return t(e_1);
+        });
     });
   }
 
