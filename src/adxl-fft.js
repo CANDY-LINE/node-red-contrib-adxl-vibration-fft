@@ -54,7 +54,7 @@ module.exports = function (RED) {
           }
         });
       });
-      this.on('data', i => {
+      this.on('data', data => {
         try {
           Object.keys(this.nodes).forEach(e => {
             if (this.nodes[e].input) {
@@ -62,7 +62,7 @@ module.exports = function (RED) {
               const { payloadFormat } = this.nodes[e];
               this.nodes[e].send(
                 this.client.format(
-                  i,
+                  data,
                   this.identifier,
                   numOfPeaks,
                   payloadFormat
