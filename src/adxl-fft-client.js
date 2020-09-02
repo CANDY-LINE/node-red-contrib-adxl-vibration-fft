@@ -33,7 +33,9 @@ const AMP_FULLSCALE = 34;
 const FREQ_RANGE = 20;
 
 export class ADXL100xFFTClient {
-  static get SAMPLES() { return SAMPLES; }
+  static get SAMPLES() {
+    return SAMPLES;
+  }
   constructor(opts = {}) {
     this.serialport = opts.serialport;
     if (opts instanceof EventEmitter) {
@@ -59,7 +61,7 @@ export class ADXL100xFFTClient {
       const req = `:0 ${cmd} ${param}`;
       debug(`req(text):[${req}]`);
       this.port.write(`${req}\r`);
-      this.bus.once('command-response', e => {
+      this.bus.once('command-response', (e) => {
         const res = e.toString();
         if (res.startsWith('OK')) {
           debug(`res(text):[${res}]`);
@@ -73,7 +75,7 @@ export class ADXL100xFFTClient {
   }
 
   _onStopRequested() {
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
       this.commandMode = true;
       const creCommand = () => {
         this._createCommand('CRE', '0000')
@@ -115,7 +117,7 @@ export class ADXL100xFFTClient {
     this.fftHeader = null;
     this.bus.emit('connected');
     debug('[_onFftReady] OK');
-    this.bus.on('fft', e => {
+    this.bus.on('fft', (e) => {
       for (; 0 < e.length; ) {
         if (this.fftHeaderInProgress) {
           this.fftHeader = this.fftHeader || Buffer.from([]);
@@ -123,7 +125,7 @@ export class ADXL100xFFTClient {
           if (
             ((this.fftHeader = Buffer.concat([
               this.fftHeader,
-              e.slice(0, 12 - t)
+              e.slice(0, 12 - t),
             ])),
             12 !== this.fftHeader.length)
           ) {
@@ -142,7 +144,7 @@ export class ADXL100xFFTClient {
         if (this.fftBody.length === this.fftBodySize) {
           this.bus.emit('fft-data-arrived', {
             header: this._parseNotifyBuf(this.fftHeader),
-            body: this._parseDataBuf(this.fftBody)
+            body: this._parseDataBuf(this.fftBody),
           });
           this.fftHeaderInProgress = true;
           this.fftHeader = null;
@@ -151,7 +153,7 @@ export class ADXL100xFFTClient {
         }
       }
     });
-    this.bus.on('fft-data-arrived', e => {
+    this.bus.on('fft-data-arrived', (e) => {
       debug('[fft-data-arrived] command => ' + e.header.command);
       if ('XFD' === e.header.command) {
         this.bus.emit('data', e.body);
@@ -160,15 +162,15 @@ export class ADXL100xFFTClient {
   }
 
   async _openSerialPort() {
-    await new Promise(resolve => {
+    await new Promise((resolve) => {
       const t = () => {
         this.port = new SerialPort(this.serialport, {
-          baudRate: 230400
+          baudRate: 230400,
         });
         this.port.on('close', () => {
           this.bus.emit('disconnected'), (this.closed = true);
         });
-        this.port.on('error', e => {
+        this.port.on('error', (e) => {
           debug('[error] ' + e.stack);
           this.closed &&
             this.port.close(() => {
@@ -187,13 +189,13 @@ export class ADXL100xFFTClient {
           };
           timer = setTimeout(ping, 100);
           this.port.write('\r');
-          this.bus.once('command-response', e => {
+          this.bus.once('command-response', (e) => {
             clearTimeout(timer);
             return resolve(e);
           });
         });
         let r = null;
-        this.port.on('data', e => {
+        this.port.on('data', (e) => {
           this.commandMode
             ? ((r = r || Buffer.from([])),
               (1 < (r = Buffer.concat([r, e])).length &&
@@ -217,10 +219,11 @@ export class ADXL100xFFTClient {
         debug(`[start] initialzing parameters...`);
         this._onInitCompleted()
           .then(resolve)
-          .catch(err => {
+          .catch((err) => {
             debug(
-              `[start] Error while initialzing: trial=${trial}, err=${err.message ||
-              err}`
+              `[start] Error while initialzing: trial=${trial}, err=${
+                err.message || err
+              }`
             );
             if (trial > 3) {
               return reject(err);
@@ -242,19 +245,18 @@ export class ADXL100xFFTClient {
     }
     await (this.commandMode
       ? Promise.resolve()
-      : new Promise(e => {
-        r.debug('Schedule the shutdown command...'),
-          r.bus.once('data', () => {
-            return e();
-          });
-      })
-    );
+      : new Promise((e) => {
+          r.debug('Schedule the shutdown command...'),
+            r.bus.once('data', () => {
+              return e();
+            });
+        }));
     return new Promise((e, t) => {
       return r
         ._onShutdownRequested()
         .then(() => {
-          ['fft', 'fft-data-arrived', 'command-response'].forEach(t => {
-            r.bus.listeners(t).forEach(e => {
+          ['fft', 'fft-data-arrived', 'command-response'].forEach((t) => {
+            r.bus.listeners(t).forEach((e) => {
               return r.bus.removeListener(t, e);
             });
           });
@@ -264,16 +266,14 @@ export class ADXL100xFFTClient {
             return e(true);
           });
         })
-        .catch(e_1 => {
+        .catch((e_1) => {
           return t(e_1);
         });
     });
   }
 
   _parseNotifyBuf(e) {
-    if (
-      (debug('[_parseNotifyBuf] buf => ' + e + ', len => ' + e.length), !e)
-    ) {
+    if ((debug('[_parseNotifyBuf] buf => ' + e + ', len => ' + e.length), !e)) {
       throw new Error('No input!');
     }
     return (
@@ -282,7 +282,7 @@ export class ADXL100xFFTClient {
         : Buffer.isBuffer(e) || (e = Buffer.from(e.toString())),
       {
         command: e.slice(3, 6).toString(),
-        size: 256 * e[9] + e[10]
+        size: 256 * e[9] + e[10],
       }
     );
   }
@@ -315,23 +315,28 @@ export class ADXL100xFFTClient {
       dataBuf = Buffer.from(dataBuf.toString());
     }
     // FFT_Timestamp
-    const timestamp = dataBuf[0] + 256 * dataBuf[1] + 65536 * dataBuf[2] + 16777216 * dataBuf[3];
-    const peaks = [];  // length = 8
+    const timestamp =
+      dataBuf[0] +
+      256 * dataBuf[1] +
+      65536 * dataBuf[2] +
+      16777216 * dataBuf[3];
+    const peaks = []; // length = 8
     let frequency = null;
     // 2 * 4 = 8 elements
     for (let i = 8; i < 20; i += 3) {
       frequency = ((15 & dataBuf[i + 1]) << 8) + dataBuf[i];
       peaks.push({
-        frequency
+        frequency,
       });
       frequency = (dataBuf[i + 2] << 4) + ((240 & dataBuf[i + 1]) >> 4);
       peaks.push({
-        frequency
+        frequency,
       });
     }
 
     let a = null;
-    for (let i = 0; i < 8; i++) {  // 8 elements
+    for (let i = 0; i < 8; i++) {
+      // 8 elements
       peaks[i].amplitude =
         ((((1 - 2 * ((128 & (a = dataBuf[21 + 2 * i])) >> 7)) *
           Math.pow(2, (124 & a) >> 2)) /
@@ -344,13 +349,15 @@ export class ADXL100xFFTClient {
       raw = Array(SAMPLES);
       for (let i = 0; i < SAMPLES; i++) {
         const bufIndex = 36 + 2 * i;
-        raw[i] = this._byte2binary16(dataBuf[bufIndex] + 256 * dataBuf[bufIndex + 1]);
+        raw[i] = this._byte2binary16(
+          dataBuf[bufIndex] + 256 * dataBuf[bufIndex + 1]
+        );
       }
     }
     return {
       raw,
       timestamp,
-      peaks
+      peaks,
     };
   }
 
@@ -362,7 +369,7 @@ export class ADXL100xFFTClient {
     let o = this,
       a = {
         timestamp: e.timestamp,
-        topic
+        topic,
       };
     r < 0 ? (r = 0) : 8 < r && (r = 8);
     let i = e.peaks.slice(0, r);
@@ -372,10 +379,10 @@ export class ADXL100xFFTClient {
         let u = ['FFT'],
           f = [
             e.raw
-              ? e.raw.map(e => {
+              ? e.raw.map((e) => {
                   return o._convertAmp(e);
                 })
-              : []
+              : [],
           ];
         'chart' === payloadFormat &&
           i.forEach((e, t) => {
@@ -387,31 +394,31 @@ export class ADXL100xFFTClient {
             {
               series: u,
               data: f,
-              labels: this.frequencyLabels
-            }
+              labels: this.frequencyLabels,
+            },
           ]);
         break;
       case 'all':
         let s = e.raw
-          ? Array.prototype.slice.call(e.raw, 0).map(e => {
+          ? Array.prototype.slice.call(e.raw, 0).map((e) => {
               return o._convertAmp(e);
             })
           : null;
         a.payload = {
-          peaks: i.map(e => {
+          peaks: i.map((e) => {
             return {
-              frequency: SAMPLE_FREQ / FFT_POINTS * e.frequency,
-              amplitude: o._convertAmp(e.amplitude)
+              frequency: (SAMPLE_FREQ / FFT_POINTS) * e.frequency,
+              amplitude: o._convertAmp(e.amplitude),
             };
           }),
-          fft: s
+          fft: s,
         };
         break;
       case 'peak':
-        a.payload = i.map(e => {
+        a.payload = i.map((e) => {
           return {
-            frequency: SAMPLE_FREQ / FFT_POINTS * e.frequency,
-            amplitude: o._convertAmp(e.amplitude)
+            frequency: (SAMPLE_FREQ / FFT_POINTS) * e.frequency,
+            amplitude: o._convertAmp(e.amplitude),
           };
         });
     }
