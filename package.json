@@ -28,9 +28,11 @@
     "ADXL1001",
     "ADXL1002",
     "ADXL356",
+    "EMQuest-VA",
     "Fast Fourier Transform",
     "FFT",
     "Analog Devices",
+    "UQUEST, LTD.",
     "Raspberry Pi",
     "ASUS TinkerBoard",
     "CANDY RED",
@@ -69,6 +71,7 @@
     "fsevents": "^2.1.2"
   },
   "dependencies": {
+    "debug": "^4.1.1",
     "hexdump-nodejs": "^0.1.0",
     "serialport": "^9.0.1",
     "source-map-support": "^0.5.19"
