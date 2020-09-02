@@ -19,7 +19,7 @@ import 'source-map-support/register';
 import SerialPort from 'serialport';
 import { ADXL100xFFTClient } from './adxl-fft-client';
 
-export default function(RED) {
+module.exports = function (RED) {
   const o = {};
   const exitHandler = () => {
     Object.keys(o).forEach(e => {
