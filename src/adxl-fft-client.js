@@ -122,11 +122,11 @@ export class ADXL100xFFTClient {
       for (; 0 < dataBuf.length; ) {
         if (this.fftHeaderInProgress) {
           this.fftHeader = this.fftHeader || Buffer.from([]);
-          const t = this.fftHeader.length;
+          const headerLength = this.fftHeader.length;
           if (
             ((this.fftHeader = Buffer.concat([
               this.fftHeader,
-              dataBuf.slice(0, 12 - t),
+              dataBuf.slice(0, 12 - headerLength),
             ])),
             12 !== this.fftHeader.length)
           ) {
@@ -137,11 +137,11 @@ export class ADXL100xFFTClient {
           debug(`FFT body size => ${this.fftBodySize}`);
           this.fftHeaderInProgress = false;
           this.fftBody = Buffer.from([]);
-          dataBuf = dataBuf.slice(12 - t);
+          dataBuf = dataBuf.slice(12 - headerLength);
         }
-        const r = this.fftBodySize - this.fftBody.length;
-        this.fftBody = Buffer.concat([this.fftBody, dataBuf.slice(0, r)]);
-        dataBuf = dataBuf.slice(r);
+        const fftBodySizeDiff = this.fftBodySize - this.fftBody.length;
+        this.fftBody = Buffer.concat([this.fftBody, dataBuf.slice(0, fftBodySizeDiff)]);
+        dataBuf = dataBuf.slice(fftBodySizeDiff);
         if (this.fftBody.length === this.fftBodySize) {
           this.bus.emit('fft-data-arrived', {
             header: this._parseNotifyBuf(this.fftHeader),
