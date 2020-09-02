@@ -87,10 +87,9 @@ export class ADXL100xFFTClient {
     });
   }
 
-  _onShutdownRequested() {
-    return this._onStopRequested().then(() => {
-      return this._createCommandPromise('SRS', '0000');
-    });
+  async _onShutdownRequested() {
+    await this._onStopRequested();
+    return this._createCommandPromise('SRS', '0000');
   }
 
   async _onInitCompleted() {
