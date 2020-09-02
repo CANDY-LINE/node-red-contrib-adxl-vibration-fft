@@ -141,12 +141,12 @@ export class ADXL100xFFTClient {
           this.rawMsgBody = Buffer.from([]);
           dataBuf = dataBuf.slice(12 - headerLength);
         }
-        const fftBodySizeDiff = this.rawMsgBodySize - this.rawMsgBody.length;
+        const rawMsgBodySizeDiff = this.rawMsgBodySize - this.rawMsgBody.length;
         this.rawMsgBody = Buffer.concat([
           this.rawMsgBody,
-          dataBuf.slice(0, fftBodySizeDiff),
+          dataBuf.slice(0, rawMsgBodySizeDiff),
         ]);
-        dataBuf = dataBuf.slice(fftBodySizeDiff);
+        dataBuf = dataBuf.slice(rawMsgBodySizeDiff);
         if (this.rawMsgBody.length === this.rawMsgBodySize) {
           this.bus.emit('fft-data-arrived', {
             header: this._parseNotifyBuf(this.rawMsgHeader),
