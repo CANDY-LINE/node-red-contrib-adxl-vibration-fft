@@ -352,7 +352,6 @@ export class ADXL100xFFTClient {
       });
     }
 
-    let a = null;
     debug(
       `[FFT Data Header:Peak Amp.]\n${hexdump(
         dataBuf.slice(FFT_DATA_HEADER_PEAK_VAL_IDX, 36)
