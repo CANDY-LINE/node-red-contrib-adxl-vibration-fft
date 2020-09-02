@@ -27,19 +27,19 @@ const SAMPLES = 800; // up to 2030
 
 export class ADXL100xFFTClient {
   static get SAMPLES() { return SAMPLES; }
-  constructor(e = {}) {
-    this.serialport = e.serialport;
-    this.log = e.log ? e.log.bind(e) : console.log;
-    this.trace = e.trace ? e.trace.bind(e) : console.log;
-    this.debug = e.debug ? e.debug.bind(e) : console.log;
-    this.error = e.error ? e.error.bind(e) : console.error;
-    this.log = e.log ? e.log.bind(e) : console.log;
-    if (e instanceof EventEmitter) {
-      this.bus = e;
+  constructor(opts = {}) {
+    this.serialport = opts.serialport;
+    this.log = opts.log ? opts.log.bind(opts) : console.log;
+    this.trace = opts.trace ? opts.trace.bind(opts) : console.log;
+    this.debug = opts.debug ? opts.debug.bind(opts) : console.log;
+    this.error = opts.error ? opts.error.bind(opts) : console.error;
+    this.log = opts.log ? opts.log.bind(opts) : console.log;
+    if (opts instanceof EventEmitter) {
+      this.bus = opts;
     } else {
-      this.bus = e.bus || new EventEmitter();
+      this.bus = opts.bus || new EventEmitter();
     }
-    this.emitFftValues = e.emitFftValues;
+    this.emitFftValues = opts.emitFftValues;
     this.closed = true;
     this.frequencyLabels = [];
     for (let t = 0; t < SAMPLES; t++) {
@@ -47,14 +47,14 @@ export class ADXL100xFFTClient {
     }
   }
 
-  async _createUartCommandPromise(e, t) {
-    await this._createCommandPromise('CPS', '0000');
-    return this._createCommandPromise(e, t);
+  async _createUartCommand(cmd, param) {
+    await this._createCommand('CPS', '0000');
+    return this._createCommand(cmd, param);
   }
 
-  _createCommandPromise(o, a) {
+  _createCommand(cmd, param) {
     return new Promise((resolve, reject) => {
-      const req = `:0 ${o} ${a}`;
+      const req = `:0 ${cmd} ${param}`;
       this.debug(`req(text):[${req}]`);
       this.port.write(`${req}\r`);
       this.bus.once('command-response', e => {
@@ -64,7 +64,7 @@ export class ADXL100xFFTClient {
           return resolve();
         }
         reject(
-          new Error(`CMD: ${o} ${a}, Unexpected response:\n${hexdump(e)}`)
+          new Error(`CMD: ${cmd} ${param}, Unexpected response:\n${hexdump(e)}`)
         );
       });
     });
@@ -74,7 +74,7 @@ export class ADXL100xFFTClient {
     return new Promise(resolve => {
       this.commandMode = true;
       const creCommand = () => {
-        this._createCommandPromise('CRE', '0000')
+        this._createCommand('CRE', '0000')
           .then(() => {
             resolve();
           })
@@ -89,21 +89,21 @@ export class ADXL100xFFTClient {
 
   async _onShutdownRequested() {
     await this._onStopRequested();
-    return this._createCommandPromise('SRS', '0000');
+    return this._createCommand('SRS', '0000');
   }
 
   async _onInitCompleted() {
-    await this._createCommandPromise('CPS', '0000');
-    await this._createUartCommandPromise('RMC', '0000');
-    await this._createUartCommandPromise('RRP', '001s');
-    await this._createUartCommandPromise('BSZ', '0000');
-    await this._createUartCommandPromise('DFA', '0001');
-    await this._createUartCommandPromise('AL1', '0002');
-    await this._createUartCommandPromise('AH1', '0800');
-    await this._createUartCommandPromise('AL8', '0300');
-    await this._createUartCommandPromise('AH8', '0600');
-    await this._createUartCommandPromise('AC8', '0003');
-    await this._createCommandPromise('CRS', '0000');
+    await this._createCommand('CPS', '0000');
+    await this._createUartCommand('RMC', '0000');
+    await this._createUartCommand('RRP', '001s');
+    await this._createUartCommand('BSZ', '0000');
+    await this._createUartCommand('DFA', '0001');
+    await this._createUartCommand('AL1', '0002');
+    await this._createUartCommand('AH1', '0800');
+    await this._createUartCommand('AL8', '0300');
+    await this._createUartCommand('AH8', '0600');
+    await this._createUartCommand('AC8', '0003');
+    await this._createCommand('CRS', '0000');
     return this._onFftReady();
   }
 
