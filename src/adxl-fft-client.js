@@ -32,6 +32,7 @@ const SAMPLE_FREQ = 102.4;
 const AMP_FULLSCALE = 34;
 const FREQ_RANGE = 20;
 const GRAPH_INDICATION_DELTA = 10; // A gap to avoid overlap the peak indicator on the graph
+const RAW_MSG_HEADER_LENGTH = 12;
 
 export class ADXL100xFFTClient {
   static get SAMPLES() {
@@ -126,9 +127,9 @@ export class ADXL100xFFTClient {
           if (
             ((this.fftHeader = Buffer.concat([
               this.fftHeader,
-              dataBuf.slice(0, 12 - headerLength),
+              dataBuf.slice(0, RAW_MSG_HEADER_LENGTH - headerLength),
             ])),
-            12 !== this.fftHeader.length)
+            RAW_MSG_HEADER_LENGTH !== this.fftHeader.length)
           ) {
             return;
           }
