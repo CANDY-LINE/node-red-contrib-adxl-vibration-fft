@@ -118,15 +118,15 @@ export class ADXL100xFFTClient {
     this.fftHeader = null;
     this.bus.emit('connected');
     debug('[_onFftReady] OK');
-    this.bus.on('fft', (e) => {
-      for (; 0 < e.length; ) {
+    this.bus.on('fft', (dataBuf) => {
+      for (; 0 < dataBuf.length; ) {
         if (this.fftHeaderInProgress) {
           this.fftHeader = this.fftHeader || Buffer.from([]);
           const t = this.fftHeader.length;
           if (
             ((this.fftHeader = Buffer.concat([
               this.fftHeader,
-              e.slice(0, 12 - t),
+              dataBuf.slice(0, 12 - t),
             ])),
             12 !== this.fftHeader.length)
           ) {
@@ -137,11 +137,11 @@ export class ADXL100xFFTClient {
           debug(`FFT body size => ${this.fftBodySize}`);
           this.fftHeaderInProgress = false;
           this.fftBody = Buffer.from([]);
-          e = e.slice(12 - t);
+          dataBuf = dataBuf.slice(12 - t);
         }
         const r = this.fftBodySize - this.fftBody.length;
-        this.fftBody = Buffer.concat([this.fftBody, e.slice(0, r)]);
-        e = e.slice(r);
+        this.fftBody = Buffer.concat([this.fftBody, dataBuf.slice(0, r)]);
+        dataBuf = dataBuf.slice(r);
         if (this.fftBody.length === this.fftBodySize) {
           this.bus.emit('fft-data-arrived', {
             header: this._parseNotifyBuf(this.fftHeader),
@@ -196,15 +196,15 @@ export class ADXL100xFFTClient {
           });
         });
         let r = null;
-        this.port.on('data', (data) => {
+        this.port.on('data', (dataBuf) => {
           this.commandMode
             ? ((r = r || Buffer.from([])),
-              (1 < (r = Buffer.concat([r, data])).length &&
+              (1 < (r = Buffer.concat([r, dataBuf])).length &&
                 10 === r[r.length - 2]) ||
               13 === r[r.length - 1]
                 ? (this.bus.emit('command-response', r), (r = null))
-                : this.bus.emit('command-response-data', data))
-            : this.bus.emit('fft', data);
+                : this.bus.emit('command-response-data', dataBuf))
+            : this.bus.emit('fft', dataBuf);
         });
       };
       setTimeout(t, 0);
