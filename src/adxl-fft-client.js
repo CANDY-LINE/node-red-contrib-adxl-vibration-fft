@@ -115,43 +115,47 @@ export class ADXL100xFFTClient {
 
   _onFftReady() {
     this.commandMode = false;
-    this.fftHeaderInProgress = true;
-    this.fftHeader = null;
+    this.rawMsgHeaderInProgress = true;
+    this.rawMsgHeader = null;
     this.bus.emit('connected');
     debug('[_onFftReady] OK');
     this.bus.on('fft', (dataBuf) => {
       for (; 0 < dataBuf.length; ) {
-        if (this.fftHeaderInProgress) {
-          this.fftHeader = this.fftHeader || Buffer.from([]);
-          const headerLength = this.fftHeader.length;
+        if (this.rawMsgHeaderInProgress) {
+          this.rawMsgHeader = this.rawMsgHeader || Buffer.from([]);
+          const headerLength = this.rawMsgHeader.length;
           if (
-            ((this.fftHeader = Buffer.concat([
-              this.fftHeader,
+            ((this.rawMsgHeader = Buffer.concat([
+              this.rawMsgHeader,
               dataBuf.slice(0, RAW_MSG_HEADER_LENGTH - headerLength),
             ])),
-            RAW_MSG_HEADER_LENGTH !== this.fftHeader.length)
+            RAW_MSG_HEADER_LENGTH !== this.rawMsgHeader.length)
           ) {
             return;
           }
-          this.fftBodySize = 256 * this.fftHeader[9] + this.fftHeader[10] + 4;
-          debug(`[FFT header]\n${hexdump(this.fftHeader)}`);
-          debug(`FFT body size => ${this.fftBodySize}`);
-          this.fftHeaderInProgress = false;
-          this.fftBody = Buffer.from([]);
+          this.rawMsgBodySize =
+            256 * this.rawMsgHeader[9] + this.rawMsgHeader[10] + 4;
+          debug(`[RAW MSG header]\n${hexdump(this.rawMsgHeader)}`);
+          debug(`[RAW MSG  body size] => ${this.rawMsgBodySize}`);
+          this.rawMsgHeaderInProgress = false;
+          this.rawMsgBody = Buffer.from([]);
           dataBuf = dataBuf.slice(12 - headerLength);
         }
-        const fftBodySizeDiff = this.fftBodySize - this.fftBody.length;
-        this.fftBody = Buffer.concat([this.fftBody, dataBuf.slice(0, fftBodySizeDiff)]);
+        const fftBodySizeDiff = this.rawMsgBodySize - this.rawMsgBody.length;
+        this.rawMsgBody = Buffer.concat([
+          this.rawMsgBody,
+          dataBuf.slice(0, fftBodySizeDiff),
+        ]);
         dataBuf = dataBuf.slice(fftBodySizeDiff);
-        if (this.fftBody.length === this.fftBodySize) {
+        if (this.rawMsgBody.length === this.rawMsgBodySize) {
           this.bus.emit('fft-data-arrived', {
-            header: this._parseNotifyBuf(this.fftHeader),
-            body: this._parseDataBuf(this.fftBody),
+            header: this._parseNotifyBuf(this.rawMsgHeader),
+            body: this._parseDataBuf(this.rawMsgBody),
           });
-          this.fftHeaderInProgress = true;
-          this.fftHeader = null;
-          this.fftBody = null;
-          this.fftBodySize = 0;
+          this.rawMsgHeaderInProgress = true;
+          this.rawMsgHeader = null;
+          this.rawMsgBody = null;
+          this.rawMsgBodySize = 0;
         }
       }
     });
