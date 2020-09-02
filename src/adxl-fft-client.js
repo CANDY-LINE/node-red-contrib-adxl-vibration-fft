@@ -33,6 +33,7 @@ const AMP_FULLSCALE = 34;
 const FREQ_RANGE = 20;
 const GRAPH_INDICATION_DELTA = 10; // A gap to avoid overlap the peak indicator on the graph
 const RAW_MSG_HEADER_LENGTH = 12;
+const FFT_DATA_HEADER_PEAK_FREQ_IDX = 8;
 
 export class ADXL100xFFTClient {
   static get SAMPLES() {
@@ -48,8 +49,10 @@ export class ADXL100xFFTClient {
     this.emitFftValues = opts.emitFftValues;
     this.closed = true;
     this.frequencyLabels = [];
-    for (let t = 0; t < SAMPLES; t++) {
-      this.frequencyLabels.push(Math.floor((20 * t) / (SAMPLES - 1)) + 'kHz');
+    for (let i = 0; i < SAMPLES; i++) {
+      this.frequencyLabels.push(
+        Math.floor((FREQ_RANGE * i) / (SAMPLES - 1)) + 'kHz'
+      );
     }
   }
 
@@ -304,7 +307,7 @@ export class ADXL100xFFTClient {
       : (t ? -1 : 1) * Math.pow(2, r - 15) * (1 + 0.0009765625 * n);
   }
 
-  _parseDataBuf(dataBuf) {
+  _parseDataBuf(/* FFT Data Header (36 bytes) + FFT Data */ dataBuf) {
     if (!dataBuf) {
       throw new Error('No input!');
     }
@@ -321,21 +324,33 @@ export class ADXL100xFFTClient {
       16777216 * dataBuf[3];
     const peaks = []; // length = 8
     let frequency = null;
-    // 2 * 4 = 8 elements
-    for (let i = 8; i < 20; i += 3) {
-      frequency = ((15 & dataBuf[i + 1]) << 8) + dataBuf[i];
+    // FFT Peak Frequencies (2 * 4 = 8 elements)
+    debug(`[FFT Data Header:Peak Freq.]\n${hexdump(dataBuf.slice(8, 20))}`);
+    for (let i = FFT_DATA_HEADER_PEAK_FREQ_IDX; i < 20; i += 3) {
+      frequency = ((0x0f & dataBuf[i + 1]) << 8) + dataBuf[i];
+      debug(
+        `${frequency}, 0x0f & dataBuf[i + 1]<< 8=${
+          0x0f & (dataBuf[i + 1] << 8)
+        }, dataBuf[i]=${dataBuf[i]}`
+      );
       peaks.push({
         frequency,
       });
-      frequency = (dataBuf[i + 2] << 4) + ((240 & dataBuf[i + 1]) >> 4);
+      frequency = (dataBuf[i + 2] << 4) + ((0xf0 & dataBuf[i + 1]) >> 4);
+      debug(
+        `${frequency}, 0x0f & dataBuf[i + 2] << 4=${
+          0x0f & (dataBuf[i + 1] << 8)
+        }, (0xf0 & dataBuf[i + 1]) >> 4=${(0xf0 & dataBuf[i + 1]) >> 4}`
+      );
       peaks.push({
         frequency,
       });
     }
 
     let a = null;
+    debug(`[FFT Data Header:Peak Amp.]\n${hexdump(dataBuf.slice(20, 36))}`);
     for (let i = 0; i < 8; i++) {
-      // 8 elements
+      // FFT Peak Amplitude Values (8 elements)
       peaks[i].amplitude =
         ((((1 - 2 * ((128 & (a = dataBuf[21 + 2 * i])) >> 7)) *
           Math.pow(2, (124 & a) >> 2)) /
