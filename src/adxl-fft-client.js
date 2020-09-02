@@ -27,6 +27,10 @@ import debugLogger from 'debug';
 const debug = debugLogger('node-red-contrib-adxl-vibration-fft:index');
 
 const SAMPLES = 800; // up to 2030
+const FFT_POINTS = 4096;
+const SAMPLE_FREQ = 102.4;
+const AMP_FULLSCALE = 34;
+const FREQ_RANGE = 20;
 
 export class ADXL100xFFTClient {
   static get SAMPLES() { return SAMPLES; }
@@ -351,7 +355,7 @@ export class ADXL100xFFTClient {
   }
 
   _convertAmp(e) {
-    return 20 * Math.log10(e) - 34;
+    return FREQ_RANGE * Math.log10(e) - AMP_FULLSCALE;
   }
 
   format(e, topic, r, payloadFormat) {
@@ -396,7 +400,7 @@ export class ADXL100xFFTClient {
         a.payload = {
           peaks: i.map(e => {
             return {
-              frequency: 0.025 * e.frequency,
+              frequency: SAMPLE_FREQ / FFT_POINTS * e.frequency,
               amplitude: o._convertAmp(e.amplitude)
             };
           }),
@@ -406,7 +410,7 @@ export class ADXL100xFFTClient {
       case 'peak':
         a.payload = i.map(e => {
           return {
-            frequency: 0.025 * e.frequency,
+            frequency: SAMPLE_FREQ / FFT_POINTS * e.frequency,
             amplitude: o._convertAmp(e.amplitude)
           };
         });
