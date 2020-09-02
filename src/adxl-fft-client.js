@@ -153,16 +153,16 @@ export class ADXL100xFFTClient {
         }
       }
     });
-    this.bus.on('fft-data-arrived', (e) => {
-      debug('[fft-data-arrived] command => ' + e.header.command);
-      if ('XFD' === e.header.command) {
-        this.bus.emit('data', e.body);
+    this.bus.on('fft-data-arrived', (payload) => {
+      debug('[fft-data-arrived] command => ' + payload.header.command);
+      if ('XFD' === payload.header.command) {
+        this.bus.emit('data', payload.body);
       }
     });
   }
 
   async _openSerialPort() {
-    await new Promise((resolve) => {
+    return await new Promise((resolve) => {
       const t = () => {
         this.port = new SerialPort(this.serialport, {
           baudRate: 230400,
@@ -195,15 +195,15 @@ export class ADXL100xFFTClient {
           });
         });
         let r = null;
-        this.port.on('data', (e) => {
+        this.port.on('data', (data) => {
           this.commandMode
             ? ((r = r || Buffer.from([])),
-              (1 < (r = Buffer.concat([r, e])).length &&
+              (1 < (r = Buffer.concat([r, data])).length &&
                 10 === r[r.length - 2]) ||
               13 === r[r.length - 1]
                 ? (this.bus.emit('command-response', r), (r = null))
-                : this.bus.emit('command-response-data', e))
-            : this.bus.emit('fft', e);
+                : this.bus.emit('command-response-data', data))
+            : this.bus.emit('fft', data);
         });
       };
       setTimeout(t, 0);
@@ -272,24 +272,30 @@ export class ADXL100xFFTClient {
     });
   }
 
-  _parseNotifyBuf(e) {
-    if ((debug('[_parseNotifyBuf] buf => ' + e + ', len => ' + e.length), !e)) {
+  _parseNotifyBuf(dataBuf) {
+    if (
+      (debug(
+        '[_parseNotifyBuf] buf => ' + dataBuf + ', len => ' + dataBuf.length
+      ),
+      !dataBuf)
+    ) {
       throw new Error('No input!');
     }
     return (
-      Array.isArray(e)
-        ? (e = Buffer.from(e))
-        : Buffer.isBuffer(e) || (e = Buffer.from(e.toString())),
+      Array.isArray(dataBuf)
+        ? (dataBuf = Buffer.from(dataBuf))
+        : Buffer.isBuffer(dataBuf) ||
+          (dataBuf = Buffer.from(dataBuf.toString())),
       {
-        command: e.slice(3, 6).toString(),
-        size: 256 * e[9] + e[10],
+        command: dataBuf.slice(3, 6).toString(),
+        size: 256 * dataBuf[9] + dataBuf[10],
       }
     );
   }
-  _byte2binary16(e) {
-    let t = 32768 & e,
-      r = (e >> 10) & 31,
-      n = 1023 & e;
+  _byte2binary16(byteValue) {
+    let t = 32768 & byteValue,
+      r = (byteValue >> 10) & 31,
+      n = 1023 & byteValue;
     return 31 === r
       ? 0 === n
         ? t
@@ -361,67 +367,72 @@ export class ADXL100xFFTClient {
     };
   }
 
-  _convertAmp(e) {
-    return FREQ_RANGE * Math.log10(e) - AMP_FULLSCALE;
+  _convertAmp(rawAmpValue) {
+    return FREQ_RANGE * Math.log10(rawAmpValue) - AMP_FULLSCALE;
   }
 
-  format(e, topic, r, payloadFormat) {
-    let o = this,
-      a = {
-        timestamp: e.timestamp,
-        topic,
-      };
-    r < 0 ? (r = 0) : 8 < r && (r = 8);
-    let i = e.peaks.slice(0, r);
+  format(data, topic, numOfPeaks, payloadFormat) {
+    const payload = {
+      timestamp: data.timestamp,
+      topic,
+    };
+    if (numOfPeaks < 0) {
+      numOfPeaks = 0;
+    } else if (8 < numOfPeaks) {
+      numOfPeaks = 8;
+    }
+    const peaks = data.peaks.slice(0, numOfPeaks);
     switch (payloadFormat) {
       case 'chart':
       case 'chartWithoutPeak':
-        let u = ['FFT'],
-          f = [
-            e.raw
-              ? e.raw.map((e) => {
-                  return o._convertAmp(e);
-                })
-              : [],
-          ];
-        'chart' === payloadFormat &&
-          i.forEach((e, t) => {
-            u.push('Peak' + (t + 1));
-            let r = Array(SAMPLES).fill(0);
-            (r[e.frequency] = o._convertAmp(e.amplitude) + 10), f.push(r);
-          }),
-          (a.payload = [
+        const series = ['FFT'];
+        const amplitude = [
+          data.raw
+            ? data.raw.map((rawAmpValue) => {
+                return this._convertAmp(rawAmpValue);
+              })
+            : [],
+        ];
+        if ('chart' === payloadFormat) {
+          peaks.forEach((peak, i) => {
+            series.push('Peak' + (i + 1));
+            const peakIndicator = Array(SAMPLES).fill(0);
+            peakIndicator[peak.frequency] = this._convertAmp(peak.amplitude) + 10;
+            amplitude.push(peakIndicator);
+          });
+          payload.payload = [
             {
-              series: u,
-              data: f,
+              series,
+              data: amplitude,
               labels: this.frequencyLabels,
             },
-          ]);
+          ];
+        }
         break;
       case 'all':
-        let s = e.raw
-          ? Array.prototype.slice.call(e.raw, 0).map((e) => {
-              return o._convertAmp(e);
+        const fft = data.raw
+          ? Array.prototype.slice.call(data.raw, 0).map((rawAmpValue) => {
+              return this._convertAmp(rawAmpValue);
             })
           : null;
-        a.payload = {
-          peaks: i.map((e) => {
+        payload.payload = {
+          peaks: peaks.map((peak) => {
             return {
-              frequency: (SAMPLE_FREQ / FFT_POINTS) * e.frequency,
-              amplitude: o._convertAmp(e.amplitude),
+              frequency: (SAMPLE_FREQ / FFT_POINTS) * peak.frequency,
+              amplitude: this._convertAmp(peak.amplitude),
             };
           }),
-          fft: s,
+          fft,
         };
         break;
       case 'peak':
-        a.payload = i.map((e) => {
+        payload.payload = peaks.map((peak) => {
           return {
-            frequency: (SAMPLE_FREQ / FFT_POINTS) * e.frequency,
-            amplitude: o._convertAmp(e.amplitude),
+            frequency: (SAMPLE_FREQ / FFT_POINTS) * peak.frequency,
+            amplitude: this._convertAmp(peak.amplitude),
           };
         });
     }
-    return a;
+    return payload;
   }
 }
