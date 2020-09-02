@@ -4,7 +4,9 @@ node-red-contrib-adxl-vibration-fft
 [![GitHub release](https://img.shields.io/github/release/CANDY-LINE/node-red-contrib-adxl-vibration-fft.svg)](https://github.com/CANDY-LINE/node-red-contrib-adxl-vibration-fft/releases/latest)
 [![master Build Status](https://travis-ci.org/CANDY-LINE/node-red-contrib-adxl-vibration-fft.svg?branch=master)](https://travis-ci.org/CANDY-LINE/node-red-contrib-adxl-vibration-fft/)
 
-Node-RED nodes for Vibration Measurement using Analog Devices' [EVAL-ADXL100X Vibration Sensor Evaluation Board](http://www.analog.com/en/design-center/evaluation-hardware-and-software/evaluation-boards-kits/EVAL-ADXL100X.html) and [EV-COG-AD4050 ARM Cortex M4F MCU](http://www.analog.com/en/design-center/evaluation-hardware-and-software/evaluation-boards-kits/EV-COG-AD4050.html) with the special [firmware for FFT (Fast Fourier Transform)](https://www.analog.com/jp/landing-pages/003/form/jp_sensor_pv_vibration.html).
+Node-RED nodes for Vibration Measurement using:
+1. Analog Devices' [EVAL-ADXL100X Vibration Sensor Evaluation Board](http://www.analog.com/en/design-center/evaluation-hardware-and-software/evaluation-boards-kits/EVAL-ADXL100X.html) and [EV-COG-AD4050 ARM Cortex M4F MCU](http://www.analog.com/en/design-center/evaluation-hardware-and-software/evaluation-boards-kits/EV-COG-AD4050.html) with the special [firmware for FFT (Fast Fourier Transform)](https://www.analog.com/jp/landing-pages/003/form/jp_sensor_pv_vibration.html)
+1. [EMQuest-VA](https://www.uquest.co.jp/em/va.html) by UQUEST, LTD.
 
 The nodes work with other MCU boards using the same UART protocol as the above firmware as well.
 
@@ -19,17 +21,27 @@ The bundled example flow provides the following demonstrations:
 
 # Prerequisites
 
-## Hardware
+## Supported Hardwares
 
+### Analog Devices
 - [EVAL-ADXL1002Z](https://www.analog.com/jp/design-center/evaluation-hardware-and-software/evaluation-boards-kits/EVAL-ADXL100X.html#eb-buy) ... MEMS Accelerometers
 - [EV-COG-AD4050LZ](https://www.analog.com/jp/design-center/evaluation-hardware-and-software/evaluation-boards-kits/EV-COG-AD4050.html#eb-buy) ... Microcontroller development board
 - [EV-GEAR-EXPANDER1Z](https://www.analog.com/jp/design-center/evaluation-hardware-and-software/evaluation-boards-kits/EV-COG-AD4050.html#eb-buy) ...  Expansion board for bread boarding
 - [2-conductor Shielded Cable](https://oyaide.com/catalog/products/2794.html)
 - USB cable (Type A - microUSB) for connecting EVAL-ADXL1002Z board to Raspberry Pi
+- Frequency range is 0-20KHz.
+
+### UQUEST, LTD.
+- [EMQuest-VA](https://www.uquest.co.jp/em/va.html) with an extra USB serial cable
+- Frequency range is 0.05-1.5KHz.
 
 ## Software
 
+### Analog Devices
 - Firmware for this node is available at [analog.com/jp](https://www.analog.com/jp/landing-pages/003/form/jp_sensor_pv_vibration.html). User registration is required.
+
+### UQUEST, LTD.
+- Firmware is pre-installed (proprietary licensed software)
 
 # How to install
 
@@ -42,6 +54,7 @@ npm install node-red-contrib-adxl-vibration-fft
 ```
 
 Then restart Node-RED process.
+
 
 ### Uninstallation
 
