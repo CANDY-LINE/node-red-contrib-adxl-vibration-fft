@@ -211,8 +211,8 @@ export class ADXL100xFFTClient {
   }
 
   async start() {
-    const e = await this._openSerialPort();
-    debug(`[initialMessage]\n${hexdump(e)}`);
+    const dataBuf = await this._openSerialPort();
+    debug(`[initialMessage]\n${hexdump(dataBuf)}`);
     return new Promise((resolve, reject) => {
       let trial = 0;
       const init = () => {
