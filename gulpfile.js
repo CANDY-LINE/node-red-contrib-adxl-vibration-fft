@@ -18,7 +18,7 @@
 const gulp        = require('gulp');
 const noop        = require('gulp-noop');
 const babel       = require('gulp-babel');
-const uglify      = require('gulp-uglify');
+const uglify      = require('gulp-uglify-es').default;
 const del         = require('del');
 const jshint      = require('gulp-jshint');
 const mocha       = require('gulp-mocha');
@@ -79,8 +79,7 @@ gulp.task(
         babel({
           minified: minified,
           compact: minified,
-          presets: ['env'],
-          plugins: ['add-module-exports']
+          configFile: './.babelrc'
         })
       )
       .pipe(
@@ -89,7 +88,7 @@ gulp.task(
           uglify({
             mangle: minified,
             output: {
-              comments: 'some'
+              comments: 'some',
             },
             compress: {
               dead_code: true,
@@ -101,8 +100,8 @@ gulp.task(
               drop_console: true,
               conditionals: true,
               unsafe_math: true,
-              unsafe: true
-            }
+              unsafe: true,
+            },
           }),
           noop()
         )
@@ -153,8 +152,7 @@ gulp.task(
       .pipe(sourcemaps.init())
       .pipe(
         babel({
-          presets: ['env'],
-          plugins: ['add-module-exports']
+          configFile: './.babelrc'
         })
       )
       .pipe(sourcemaps.write('.'))
