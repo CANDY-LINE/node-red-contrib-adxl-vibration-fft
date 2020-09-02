@@ -239,48 +239,35 @@ export class ADXL100xFFTClient {
   }
 
   async shutdown() {
-    let r = this;
     if (this.closed) {
-      return Promise.resolve();
+      return;
     }
-    await (this.commandMode
-      ? Promise.resolve()
-      : new Promise((e) => {
-          r.debug('Schedule the shutdown command...'),
-            r.bus.once('data', () => {
-              return e();
-            });
-        }));
-    return new Promise((e, t) => {
-      return r
-        ._onShutdownRequested()
-        .then(() => {
-          ['fft', 'fft-data-arrived', 'command-response'].forEach((t) => {
-            r.bus.listeners(t).forEach((e) => {
-              return r.bus.removeListener(t, e);
-            });
+    if (this.commandMode) {
+      await new Promise((resolve) => {
+        this.debug('Schedule the shutdown command...'),
+          this.bus.once('data', () => {
+            return resolve();
           });
-        })
-        .then(() => {
-          r.port.close(() => {
-            return e(true);
-          });
-        })
-        .catch((e_1) => {
-          return t(e_1);
-        });
+      });
+    }
+    await this._onShutdownRequested();
+    ['fft', 'fft-data-arrived', 'command-response'].forEach((event) => {
+      this.bus.listeners(event).forEach((listener) => {
+        return this.bus.removeListener(event, listener);
+      });
+    });
+    return new Promise((resolve) => {
+      this.port.close(() => {
+        return resolve(true);
+      });
     });
   }
 
   _parseNotifyBuf(dataBuf) {
-    if (
-      (debug(
-        '[_parseNotifyBuf] buf => ' + dataBuf + ', len => ' + dataBuf.length
-      ),
-      !dataBuf)
-    ) {
+    if (!dataBuf) {
       throw new Error('No input!');
     }
+    debug(`[_parseNotifyBuf] buf => ${dataBuf}, len => ${dataBuf.length}`);
     return (
       Array.isArray(dataBuf)
         ? (dataBuf = Buffer.from(dataBuf))
@@ -397,7 +384,8 @@ export class ADXL100xFFTClient {
           peaks.forEach((peak, i) => {
             series.push('Peak' + (i + 1));
             const peakIndicator = Array(SAMPLES).fill(0);
-            peakIndicator[peak.frequency] = this._convertAmp(peak.amplitude) + 10;
+            peakIndicator[peak.frequency] =
+              this._convertAmp(peak.amplitude) + 10;
             amplitude.push(peakIndicator);
           });
           payload.payload = [
