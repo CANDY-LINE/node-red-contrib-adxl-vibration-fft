@@ -31,6 +31,7 @@ const FFT_POINTS = 4096;
 const SAMPLE_FREQ = 102.4;
 const AMP_FULLSCALE = 34;
 const FREQ_RANGE = 20;
+const GRAPH_INDICATION_DELTA = 10; // A gap to avoid overlap the peak indicator on the graph
 
 export class ADXL100xFFTClient {
   static get SAMPLES() {
@@ -382,10 +383,10 @@ export class ADXL100xFFTClient {
         ];
         if ('chart' === payloadFormat) {
           peaks.forEach((peak, i) => {
-            series.push('Peak' + (i + 1));
+            series.push('Peak${i + 1}');
             const peakIndicator = Array(SAMPLES).fill(0);
             peakIndicator[peak.frequency] =
-              this._convertAmp(peak.amplitude) + 10;
+              this._convertAmp(peak.amplitude) + GRAPH_INDICATION_DELTA;
             amplitude.push(peakIndicator);
           });
           payload.payload = [
