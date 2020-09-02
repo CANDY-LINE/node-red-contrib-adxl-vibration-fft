@@ -383,7 +383,7 @@ export class ADXL100xFFTClient {
         ];
         if ('chart' === payloadFormat) {
           peaks.forEach((peak, i) => {
-            series.push('Peak${i + 1}');
+            series.push(`Peak${i + 1}`);
             const peakIndicator = Array(SAMPLES).fill(0);
             peakIndicator[peak.frequency] =
               this._convertAmp(peak.amplitude) + GRAPH_INDICATION_DELTA;
