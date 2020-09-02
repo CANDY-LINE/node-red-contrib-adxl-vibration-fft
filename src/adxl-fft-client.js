@@ -360,16 +360,14 @@ export class ADXL100xFFTClient {
     );
     for (let i = 0; i < 8; i++) {
       // FFT Peak Amplitude Values (8 elements)
+      const idx = FFT_DATA_HEADER_PEAK_VAL_IDX + 2 * i;
+      const first = dataBuf[idx];
+      const second = dataBuf[idx + 1];
       peaks[i].amplitude =
-        ((((1 -
-          2 *
-            ((128 & (a = dataBuf[FFT_DATA_HEADER_PEAK_VAL_IDX + 1 + 2 * i])) >>
-              7)) *
-          Math.pow(2, (124 & a) >> 2)) /
-          32768) *
-          (1024 +
-            256 * (3 & a) +
-            dataBuf[FFT_DATA_HEADER_PEAK_VAL_IDX + 2 * i])) /
+        ((((1 - 2 * ((0x80 & second) >> 7)) *
+          Math.pow(2, (0x7c & second) >> 2)) /
+          32768) * // Math.pow(2, 15)
+          (1024 + 256 * (0x03 & second) + first)) /
         1024;
     }
     let raw = null;
