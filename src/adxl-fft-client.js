@@ -22,6 +22,9 @@ import 'source-map-support/register';
 import { EventEmitter } from 'events';
 import SerialPort from 'serialport';
 import hexdump from 'hexdump-nodejs';
+import debugLogger from 'debug';
+
+const debug = debugLogger('node-red-contrib-adxl-vibration-fft:index');
 
 const SAMPLES = 800; // up to 2030
 
@@ -29,11 +32,6 @@ export class ADXL100xFFTClient {
   static get SAMPLES() { return SAMPLES; }
   constructor(opts = {}) {
     this.serialport = opts.serialport;
-    this.log = opts.log ? opts.log.bind(opts) : console.log;
-    this.trace = opts.trace ? opts.trace.bind(opts) : console.log;
-    this.debug = opts.debug ? opts.debug.bind(opts) : console.log;
-    this.error = opts.error ? opts.error.bind(opts) : console.error;
-    this.log = opts.log ? opts.log.bind(opts) : console.log;
     if (opts instanceof EventEmitter) {
       this.bus = opts;
     } else {
@@ -55,12 +53,12 @@ export class ADXL100xFFTClient {
   _createCommand(cmd, param) {
     return new Promise((resolve, reject) => {
       const req = `:0 ${cmd} ${param}`;
-      this.debug(`req(text):[${req}]`);
+      debug(`req(text):[${req}]`);
       this.port.write(`${req}\r`);
       this.bus.once('command-response', e => {
         const res = e.toString();
         if (res.startsWith('OK')) {
-          this.debug(`res(text):[${res}]`);
+          debug(`res(text):[${res}]`);
           return resolve();
         }
         reject(
@@ -79,7 +77,7 @@ export class ADXL100xFFTClient {
             resolve();
           })
           .catch(() => {
-            this.log('[_onShutdownRequested] error retry...');
+            debug('[_onShutdownRequested] error retry...');
             setTimeout(creCommand, 100);
           });
       };
@@ -112,7 +110,7 @@ export class ADXL100xFFTClient {
     this.fftHeaderInProgress = true;
     this.fftHeader = null;
     this.bus.emit('connected');
-    this.debug('[_onFftReady] OK');
+    debug('[_onFftReady] OK');
     this.bus.on('fft', e => {
       for (; 0 < e.length; ) {
         if (this.fftHeaderInProgress) {
@@ -128,8 +126,8 @@ export class ADXL100xFFTClient {
             return;
           }
           this.fftBodySize = 256 * this.fftHeader[9] + this.fftHeader[10] + 4;
-          this.debug(`[FFT header]\n${hexdump(this.fftHeader)}`);
-          this.debug(`FFT body size => ${this.fftBodySize}`);
+          debug(`[FFT header]\n${hexdump(this.fftHeader)}`);
+          debug(`FFT body size => ${this.fftBodySize}`);
           this.fftHeaderInProgress = false;
           this.fftBody = Buffer.from([]);
           e = e.slice(12 - t);
@@ -150,7 +148,7 @@ export class ADXL100xFFTClient {
       }
     });
     this.bus.on('fft-data-arrived', e => {
-      this.debug('[fft-data-arrived] command => ' + e.header.command);
+      debug('[fft-data-arrived] command => ' + e.header.command);
       if ('XFD' === e.header.command) {
         this.bus.emit('data', e.body);
       }
@@ -167,17 +165,17 @@ export class ADXL100xFFTClient {
           this.bus.emit('disconnected'), (this.closed = true);
         });
         this.port.on('error', e => {
-          this.debug('[error] ' + e.stack);
+          debug('[error] ' + e.stack);
           this.closed &&
             this.port.close(() => {
-              this.log('[info] trying to re-connect'), setTimeout(t, 5e3);
+              debug('[info] trying to re-connect'), setTimeout(t, 5e3);
             });
           this.bus.emit('error');
         });
         this.port.on('open', () => {
           this.closed = false;
           this.commandMode = true;
-          this.debug('Serial port (' + this.serialport + ') is now open.');
+          debug('Serial port (' + this.serialport + ') is now open.');
           let timer = null;
           const ping = () => {
             this.port.write('\r');
@@ -208,15 +206,15 @@ export class ADXL100xFFTClient {
 
   async start() {
     const e = await this._openSerialPort();
-    this.debug(`[initialMessage]\n${hexdump(e)}`);
+    debug(`[initialMessage]\n${hexdump(e)}`);
     return new Promise((resolve, reject) => {
       let trial = 0;
       const init = () => {
-        this.debug(`[start] initialzing parameters...`);
+        debug(`[start] initialzing parameters...`);
         this._onInitCompleted()
           .then(resolve)
           .catch(err => {
-            this.debug(
+            debug(
               `[start] Error while initialzing: trial=${trial}, err=${err.message ||
               err}`
             );
@@ -270,7 +268,7 @@ export class ADXL100xFFTClient {
 
   _parseNotifyBuf(e) {
     if (
-      (this.debug('[_parseNotifyBuf] buf => ' + e + ', len => ' + e.length), !e)
+      (debug('[_parseNotifyBuf] buf => ' + e + ', len => ' + e.length), !e)
     ) {
       throw new Error('No input!');
     }
