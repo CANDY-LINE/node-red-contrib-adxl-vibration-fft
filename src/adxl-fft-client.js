@@ -211,9 +211,10 @@ export class ADXL100xFFTClient {
         });
         this.port.on('error', (e) => {
           debug('[error] ' + e.stack);
-          if (this.closed) {
+          if (!this.port.isOpen) {
             this.port.close(() => {
-              debug('[info] trying to re-connect'), setTimeout(connect, 5000);
+              debug('[info] trying to re-connect');
+              setTimeout(connect, 5000);
             });
           }
           this.bus.emit('error');
@@ -244,6 +245,13 @@ export class ADXL100xFFTClient {
                 ? (this.bus.emit('command-response', r), (r = null))
                 : this.bus.emit('command-response-data', dataBuf))
             : this.bus.emit('fft', dataBuf);
+        });
+
+        this.port.open((err) => {
+          if (err) {
+            debug('[info] opening error, trying to re-connect');
+            setTimeout(connect, 5000);
+          }
         });
       };
       setTimeout(connect, 0);
