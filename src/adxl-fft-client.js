@@ -32,7 +32,7 @@ const RAW_MSG_HEADER_LENGTH = 12;
 const FFT_DATA_HEADER_PEAK_FREQ_IDX = 8;
 const FFT_DATA_HEADER_PEAK_VAL_IDX = 20;
 
-const SENSOR_DEVICE_CONFIG = {
+const EDGE_DEVICE_CONFIG = {
   geenric: {
     sampleFreq: 102.4,
     ampFullscale: 20,
@@ -48,7 +48,7 @@ const SENSOR_DEVICE_CONFIG = {
     ignoreFftHeaderPeaks: true,
   },
 };
-Object.values(SENSOR_DEVICE_CONFIG).forEach((config) => {
+Object.values(EDGE_DEVICE_CONFIG).forEach((config) => {
   config.samples = parseInt(
     (FFT_POINTS / config.sampleFreq) * config.freqRange
   );
@@ -65,9 +65,9 @@ export class ADXL100xFFTClient {
     this.emitFftValues = opts.emitFftValues;
     this.closed = true;
     this.frequencyLabels = [];
-    this.sensorDeviceModel = opts.sensorDeviceModel || 'geenric';
-    this.sensorDeviceConfig = SENSOR_DEVICE_CONFIG[this.sensorDeviceModel];
-    const { samples, freqRange } = this.sensorDeviceConfig;
+    this.edgeDeviceModel = opts.edgeDeviceModel || 'geenric';
+    this.edgeDeviceConfig = EDGE_DEVICE_CONFIG[this.edgeDeviceModel];
+    const { samples, freqRange } = this.edgeDeviceConfig;
     for (let i = 0; i < samples; i++) {
       this.frequencyLabels.push(
         `${Math.floor((freqRange * i) / (samples - 1))}kHz`
@@ -336,7 +336,7 @@ export class ADXL100xFFTClient {
       dataBuf = Buffer.from(dataBuf.toString());
     }
     // Config
-    const { samples } = this.sensorDeviceConfig;
+    const { samples } = this.edgeDeviceConfig;
 
     // FFT_Timestamp
     const timestamp =
@@ -418,7 +418,7 @@ export class ADXL100xFFTClient {
       sampleFreq,
       ampFullscale,
       ampCorrection,
-    } = this.sensorDeviceConfig;
+    } = this.edgeDeviceConfig;
     const payload = {
       timestamp: data.timestamp,
       topic,
