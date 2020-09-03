@@ -107,6 +107,9 @@ $ NODE_ENV=development npm pack
 - Node Icon ... [CC BY-ND 3.0](https://creativecommons.org/licenses/by-nd/3.0/) © [icon8](https://icons8.com)
 
 # Revision History
+* 3.0.0
+  - Add support for new edge device (UQUEST EMQuest-VA)
+  - Improve serialport reconnection
 
 * 2.0.0
   - Fix an issue where the node didn't work on Node-RED v1+
