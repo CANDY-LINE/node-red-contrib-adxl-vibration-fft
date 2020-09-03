@@ -33,7 +33,7 @@ const FFT_DATA_HEADER_PEAK_FREQ_IDX = 8;
 const FFT_DATA_HEADER_PEAK_VAL_IDX = 20;
 
 const EDGE_DEVICE_CONFIG = {
-  geenric: {
+  generic: {
     sampleFreq: 102.4,
     ampFullscale: 20,
     ampCorrection: 34,
@@ -65,14 +65,17 @@ export class ADXL100xFFTClient {
     this.emitFftValues = opts.emitFftValues;
     this.closed = true;
     this.frequencyLabels = [];
-    this.edgeDeviceModel = opts.edgeDeviceModel || 'geenric';
+    this.edgeDeviceModel = opts.edgeDeviceModel || 'generic';
     this.edgeDeviceConfig = EDGE_DEVICE_CONFIG[this.edgeDeviceModel];
     const { samples, freqRange } = this.edgeDeviceConfig;
     for (let i = 0; i < samples; i++) {
       this.frequencyLabels.push(
-        `${Math.floor((freqRange * i) / (samples - 1))}kHz`
+        `${Math.floor(((freqRange * i) / (samples - 1)) * 10) / 10}kHz`
       );
     }
+    debug(
+      `$$$$$$$$$$ [ADXL100xFFTClient] opts.edgeDeviceModel=>[${opts.edgeDeviceModel}, this.edgeDeviceModel=>[${this.edgeDeviceModel}]`
+    );
   }
 
   async _createUartCommand(cmd, param) {

@@ -42,6 +42,7 @@ module.exports = function (RED) {
       this.identifier = t.identifier;
       this.enabled = !!t.enabled;
       this.emitFftValues = !!t.emitFftValues;
+      this.edgeDeviceModel = t.edgeDeviceModel;
       this.nodes = {};
       ['connected', 'disconnected', 'error'].forEach(event => {
         this.on(event, () => {
