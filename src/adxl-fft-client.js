@@ -26,11 +26,13 @@ import debugLogger from 'debug';
 
 const debug = debugLogger('node-red-contrib-adxl-vibration-fft:index');
 
-const SAMPLES = 800; // up to 2030
-const FFT_POINTS = 4096;
 const SAMPLE_FREQ = 102.4;
-const AMP_FULLSCALE = 34;
+const AMP_FULLSCALE = 20;
+const AMP_CORRECTION = 34;
 const FREQ_RANGE = 20;
+
+const SAMPLES = 2030;
+const FFT_POINTS = 4096;
 const GRAPH_INDICATION_DELTA = 10; // A gap to avoid overlap the peak indicator on the graph
 const RAW_MSG_HEADER_LENGTH = 12;
 const FFT_DATA_HEADER_PEAK_FREQ_IDX = 8;
@@ -387,7 +389,7 @@ export class ADXL100xFFTClient {
   }
 
   _convertAmp(rawAmpValue) {
-    return FREQ_RANGE * Math.log10(rawAmpValue) - AMP_FULLSCALE;
+    return AMP_FULLSCALE * Math.log10(rawAmpValue) - AMP_CORRECTION;
   }
 
   format(data, topic, numOfPeaks, payloadFormat) {
