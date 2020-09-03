@@ -268,6 +268,7 @@ export class ADXL100xFFTClient {
   }
 
   async _startProcess() {
+    this._resetListeners();
     return new Promise((resolve, reject) => {
       let trial = 0;
       const init = () => {
@@ -293,6 +294,14 @@ export class ADXL100xFFTClient {
     });
   }
 
+  _resetListeners() {
+    ['fft', 'fft-data-arrived', 'command-response'].forEach((event) => {
+      this.bus.listeners(event).forEach((listener) => {
+        return this.bus.removeListener(event, listener);
+      });
+    });
+  }
+
   async shutdown() {
     if (this.closed) {
       return;
@@ -306,11 +315,7 @@ export class ADXL100xFFTClient {
       });
     }
     await this._onShutdownRequested();
-    ['fft', 'fft-data-arrived', 'command-response'].forEach((event) => {
-      this.bus.listeners(event).forEach((listener) => {
-        return this.bus.removeListener(event, listener);
-      });
-    });
+    this._resetListeners();
     return new Promise((resolve) => {
       this.shutdownRequested = true;
       this.port.close(() => {
