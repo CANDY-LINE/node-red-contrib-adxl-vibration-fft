@@ -31,8 +31,8 @@ const AMP_FULLSCALE = 20;
 const AMP_CORRECTION = 34;
 const FREQ_RANGE = 20;
 
-const SAMPLES = 2030;
 const FFT_POINTS = 4096;
+const SAMPLES = parseInt(FFT_POINTS / SAMPLE_FREQ * FREQ_RANGE);
 const GRAPH_INDICATION_DELTA = 10; // A gap to avoid overlap the peak indicator on the graph
 const RAW_MSG_HEADER_LENGTH = 12;
 const FFT_DATA_HEADER_PEAK_FREQ_IDX = 8;
