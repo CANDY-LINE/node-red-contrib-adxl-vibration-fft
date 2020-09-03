@@ -69,6 +69,7 @@ export class ADXL100xFFTClient {
     }
     this.emitFftValues = opts.emitFftValues;
     this.closed = true;
+    this.shutdownRequested = false;
     this.frequencyLabels = [];
     this.edgeDeviceModel = opts.edgeDeviceModel || 'generic';
     this.edgeDeviceConfig = EDGE_DEVICE_CONFIG[this.edgeDeviceModel];
@@ -198,70 +199,75 @@ export class ADXL100xFFTClient {
     });
   }
 
-  async _openSerialPort() {
-    return await new Promise((resolve) => {
-      const connect = () => {
-        this.port = new SerialPort(this.serialport, {
-          baudRate: 230400,
-          autoOpen: false,
-        });
-        this.port.on('close', () => {
-          debug('[SerialPort:close] ' + e.stack);
-          this.bus.emit('disconnected');
-          this.closed = true;
-        });
-        this.port.on('error', (e) => {
-          debug('[SerialPort:error] ' + e.stack);
-          if (!this.port.isOpen) {
-            this.port.close(() => {
-              debug('[SerialPort:close] trying to re-connect');
-              setTimeout(connect, 5000);
-            });
-          }
-          this.bus.emit('error');
-        });
-        this.port.on('open', () => {
-          this.closed = false;
-          this.commandMode = true;
-          debug(`[SerialPort:open] Serial port (${this.serialport}) is now open.`);
-          let timer = null;
-          const ping = () => {
-            this.port.write('\r');
-            timer = setTimeout(ping, 100);
-          };
-          timer = setTimeout(ping, 100);
-          this.port.write('\r');
-          this.bus.once('command-response', (response) => {
-            clearTimeout(timer);
-            return resolve(response);
-          });
-        });
-        let r = null;
-        this.port.on('data', (dataBuf) => {
-          this.commandMode
-            ? ((r = r || Buffer.from([])),
-              (1 < (r = Buffer.concat([r, dataBuf])).length &&
-                10 === r[r.length - 2]) ||
-              13 === r[r.length - 1]
-                ? (this.bus.emit('command-response', r), (r = null))
-                : this.bus.emit('command-response-data', dataBuf))
-            : this.bus.emit('fft', dataBuf);
-        });
-
-        this.port.open((err) => {
-          if (err) {
-            debug('[info] opening error, trying to re-connect');
+  async start() {
+    const connect = () => {
+      this.port = new SerialPort(this.serialport, {
+        baudRate: 230400,
+        autoOpen: false,
+      });
+      this.port.on('close', () => {
+        this.bus.emit('disconnected');
+        this.closed = true;
+        if (this.shutdownRequested) {
+          return;
+        }
+        debug('[SerialPort:close] trying to re-connect');
+        setTimeout(connect, 5000);
+      });
+      this.port.on('error', (e) => {
+        debug('[SerialPort:error] ' + e.stack);
+        if (!this.port.isOpen) {
+          this.port.close(() => {
+            debug('[SerialPort:error] trying to re-connect');
             setTimeout(connect, 5000);
-          }
+          });
+        }
+        this.bus.emit('error');
+      });
+      this.port.on('open', () => {
+        this.closed = false;
+        this.commandMode = true;
+        debug(
+          `[SerialPort:open] Serial port (${this.serialport}) is now open.`
+        );
+        let timer = null;
+        const ping = () => {
+          this.port.write('\r');
+          timer = setTimeout(ping, 100);
+        };
+        timer = setTimeout(ping, 100);
+        this.port.write('\r');
+        this.bus.once('command-response', (response) => {
+          debug(`[command-response]\n${hexdump(response)}`);
+          clearTimeout(timer);
+          this._startProcess();
         });
-      };
-      setTimeout(connect, 0);
-    });
+      });
+      let r = null;
+      this.port.on('data', (dataBuf) => {
+        this.commandMode
+          ? ((r = r || Buffer.from([])),
+            (1 < (r = Buffer.concat([r, dataBuf])).length &&
+              10 === r[r.length - 2]) ||
+            13 === r[r.length - 1]
+              ? (this.bus.emit('command-response', r), (r = null))
+              : this.bus.emit('command-response-data', dataBuf))
+          : this.bus.emit('fft', dataBuf);
+      });
+
+      this.port.open((err) => {
+        if (err) {
+          debug(
+            `[Serialport:open] opening error, trying to re-connect. Err:${err.message}`
+          );
+          setTimeout(connect, 5000);
+        }
+      });
+    };
+    setTimeout(connect, 0);
   }
 
-  async start() {
-    const dataBuf = await this._openSerialPort();
-    debug(`[initialMessage]\n${hexdump(dataBuf)}`);
+  async _startProcess() {
     return new Promise((resolve, reject) => {
       let trial = 0;
       const init = () => {
@@ -306,6 +312,7 @@ export class ADXL100xFFTClient {
       });
     });
     return new Promise((resolve) => {
+      this.shutdownRequested = true;
       this.port.close(() => {
         return resolve(true);
       });
