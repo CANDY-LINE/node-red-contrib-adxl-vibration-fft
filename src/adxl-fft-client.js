@@ -206,14 +206,15 @@ export class ADXL100xFFTClient {
           autoOpen: false,
         });
         this.port.on('close', () => {
+          debug('[SerialPort:close] ' + e.stack);
           this.bus.emit('disconnected');
           this.closed = true;
         });
         this.port.on('error', (e) => {
-          debug('[error] ' + e.stack);
+          debug('[SerialPort:error] ' + e.stack);
           if (!this.port.isOpen) {
             this.port.close(() => {
-              debug('[info] trying to re-connect');
+              debug('[SerialPort:close] trying to re-connect');
               setTimeout(connect, 5000);
             });
           }
@@ -222,7 +223,7 @@ export class ADXL100xFFTClient {
         this.port.on('open', () => {
           this.closed = false;
           this.commandMode = true;
-          debug('Serial port (' + this.serialport + ') is now open.');
+          debug(`[SerialPort:open] Serial port (${this.serialport}) is now open.`);
           let timer = null;
           const ping = () => {
             this.port.write('\r');
@@ -230,9 +231,9 @@ export class ADXL100xFFTClient {
           };
           timer = setTimeout(ping, 100);
           this.port.write('\r');
-          this.bus.once('command-response', (e) => {
+          this.bus.once('command-response', (response) => {
             clearTimeout(timer);
-            return resolve(e);
+            return resolve(response);
           });
         });
         let r = null;
