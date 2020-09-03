@@ -7,13 +7,18 @@
       "emitFftValues": "Emit all FFT values",
       "adxl100xFFT": "ADXL FFT",
       "payloadFormat": "FFT Value Format",
-      "numOfPeaks": "# of Peak Values"
+      "numOfPeaks": "# of Peak Values",
+      "edgeDeviceModel": "Edge Device"
     },
     "payloadFormat": {
       "peak": "Peak value array",
       "chart": "Dashboard Charts (FFT values and peaks)",
       "chartWithoutPeak": "Dashboard Charts (FFT values)",
       "all": "Peak values with all FFT values"
+    },
+    "edgeDeviceModel": {
+      "generic": "Generic ADI Device",
+      "uq": "EMQuest-VA Device"
     },
     "placeholder": {
       "serialport": "e.g. /dev/ttyUSB3",

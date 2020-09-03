@@ -19,7 +19,7 @@ import 'source-map-support/register';
 import SerialPort from 'serialport';
 import { ADXL100xFFTClient } from './adxl-fft-client';
 
-export default function(RED) {
+module.exports = function (RED) {
   const o = {};
   const exitHandler = () => {
     Object.keys(o).forEach(e => {
@@ -42,6 +42,7 @@ export default function(RED) {
       this.identifier = t.identifier;
       this.enabled = !!t.enabled;
       this.emitFftValues = !!t.emitFftValues;
+      this.edgeDeviceModel = t.edgeDeviceModel;
       this.nodes = {};
       ['connected', 'disconnected', 'error'].forEach(event => {
         this.on(event, () => {
@@ -54,7 +55,7 @@ export default function(RED) {
           }
         });
       });
-      this.on('data', i => {
+      this.on('data', data => {
         try {
           Object.keys(this.nodes).forEach(e => {
             if (this.nodes[e].input) {
@@ -62,7 +63,7 @@ export default function(RED) {
               const { payloadFormat } = this.nodes[e];
               this.nodes[e].send(
                 this.client.format(
-                  i,
+                  data,
                   this.identifier,
                   numOfPeaks,
                   payloadFormat

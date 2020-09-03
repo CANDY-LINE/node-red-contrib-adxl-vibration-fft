@@ -39,11 +39,9 @@ describe('ADXL100xFFT node', () => {
       getNode: () => {},
       registerType: (n, t) => {
         types[n] = t;
-        t.prototype = sandbox.stub({
-          on: () => {},
-          emit: () => {},
-          error: () => {}
-        });
+        t.prototype.on = () => {};
+        t.prototype.emit = () => {};
+        t.prototype.error = () => {};
       }
     };
     RED.log = sandbox.stub({

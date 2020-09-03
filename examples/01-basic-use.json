@@ -205,7 +205,8 @@
         "enabled": true,
         "serialport": "/dev/ttyACM0",
         "identifier": "adxl-fft",
-        "emitFftValues": true
+        "emitFftValues": true,
+        "edgeDeviceModel": "generic"
     },
     {
         "id": "500a4f26.82c6a8",

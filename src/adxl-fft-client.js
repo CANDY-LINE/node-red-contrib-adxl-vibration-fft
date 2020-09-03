@@ -22,65 +22,102 @@ import 'source-map-support/register';
 import { EventEmitter } from 'events';
 import SerialPort from 'serialport';
 import hexdump from 'hexdump-nodejs';
+import debugLogger from 'debug';
 
-const SAMPLES = 800; // up to 2030
+const debug = debugLogger('node-red-contrib-adxl-vibration-fft:index');
+
+const FFT_POINTS = 4096;
+const GRAPH_INDICATION_DELTA = 10; // A gap to avoid overlap the peak indicator on the graph
+const RAW_MSG_HEADER_LENGTH = 12;
+const FFT_DATA_HEADER_PEAK_FREQ_IDX = 8;
+const FFT_DATA_HEADER_PEAK_VAL_IDX = 20;
+
+const EDGE_DEVICE_CONFIG = {
+  generic: {
+    sampleFreq: 102.4,
+    ampFullscale: 20,
+    ampCorrection: 34,
+    freqRange: 20,
+    fftDataOffset: 0,
+    peakFinder: 'Header',
+  },
+  uq: {
+    sampleFreq: 107.5,
+    ampFullscale: 20,
+    ampCorrection: 20,
+    freqRange: 2,
+    fftDataOffset: 2 * 3, // Peak, RMS, CF
+    peakFinder: 'Body',
+    peakFinderByBody: {
+      startIndex: 2,
+    },
+  },
+};
+Object.values(EDGE_DEVICE_CONFIG).forEach((config) => {
+  config.samples = parseInt(
+    (FFT_POINTS / config.sampleFreq) * config.freqRange
+  );
+});
 
 export class ADXL100xFFTClient {
-  static get SAMPLES() { return SAMPLES; }
-  constructor(e = {}) {
-    this.serialport = e.serialport;
-    this.log = e.log ? e.log.bind(e) : console.log;
-    this.trace = e.trace ? e.trace.bind(e) : console.log;
-    this.debug = e.debug ? e.debug.bind(e) : console.log;
-    this.error = e.error ? e.error.bind(e) : console.error;
-    this.log = e.log ? e.log.bind(e) : console.log;
-    if (e instanceof EventEmitter) {
-      this.bus = e;
+  constructor(opts = {}) {
+    this.serialport = opts.serialport;
+    if (opts instanceof EventEmitter) {
+      this.bus = opts;
     } else {
-      this.bus = e.bus || new EventEmitter();
+      this.bus = opts.bus || new EventEmitter();
     }
-    this.emitFftValues = e.emitFftValues;
+    this.emitFftValues = opts.emitFftValues;
     this.closed = true;
+    this.shutdownRequested = false;
     this.frequencyLabels = [];
-    for (let t = 0; t < SAMPLES; t++) {
-      this.frequencyLabels.push(Math.floor((20 * t) / (SAMPLES - 1)) + 'kHz');
+    this.edgeDeviceModel = opts.edgeDeviceModel || 'generic';
+    this.edgeDeviceConfig = EDGE_DEVICE_CONFIG[this.edgeDeviceModel];
+    const { samples, freqRange, peakFinder } = this.edgeDeviceConfig;
+    for (let i = 0; i < samples; i++) {
+      this.frequencyLabels.push(
+        `${Math.floor(((freqRange * i) / (samples - 1)) * 10) / 10}kHz`
+      );
     }
+    this._findPeaks = this[`_findPeaksBy${peakFinder}`].bind(this);
+    debug(
+      `$$$$$$$$$$ [ADXL100xFFTClient] opts.edgeDeviceModel=>[${opts.edgeDeviceModel}], this.edgeDeviceModel=>[${this.edgeDeviceModel}]`
+    );
   }
 
-  _createUartCommandPromise(e, t) {
-    return this._createCommandPromise('CPS', '0000').then(() => {
-      return this._createCommandPromise(e, t);
-    });
+  async _createUartCommand(cmd, param) {
+    await this._createCommand('CPS', '0000');
+    return this._createCommand(cmd, param);
   }
 
-  _createCommandPromise(o, a) {
+  _createCommand(cmd, param) {
     return new Promise((resolve, reject) => {
-      const req = `:0 ${o} ${a}`;
-      this.debug(`req(text):[${req}]`);
+      const req = `:0 ${cmd} ${param}`;
+      debug(`req(text):[${req}]`);
       this.port.write(`${req}\r`);
-      this.bus.once('command-response', e => {
+      this.bus.once('command-response', (e) => {
         const res = e.toString();
         if (res.startsWith('OK')) {
-          this.debug(`res(text):[${res}]`);
+          debug(`res(text):[${res}]`);
           return resolve();
         }
         reject(
-          new Error(`CMD: ${o} ${a}, Unexpected response:\n${hexdump(e)}`)
+          new Error(`CMD: ${cmd} ${param}, Unexpected response:\n${hexdump(e)}`)
         );
       });
     });
   }
 
   _onStopRequested() {
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
       this.commandMode = true;
       const creCommand = () => {
-        this._createCommandPromise('CRE', '0000')
+        this._createCommand('CRE', '0000')
           .then(() => {
             resolve();
           })
           .catch(() => {
-            this.log('[_onShutdownRequested] error retry...');
+            debug('[_onShutdownRequested] error retry...');
             setTimeout(creCommand, 100);
           });
       };
@@ -88,232 +125,220 @@ export class ADXL100xFFTClient {
     });
   }
 
-  _onShutdownRequested() {
-    return this._onStopRequested().then(() => {
-      return this._createCommandPromise('SRS', '0000');
-    });
+  async _onShutdownRequested() {
+    await this._onStopRequested();
+    return this._createCommand('SRS', '0000');
   }
 
-  _onInitCompleted() {
-    return this._createCommandPromise('CPS', '0000')
-      .then(() => {
-        return this._createUartCommandPromise('RMC', '0000');
-      })
-      .then(() => {
-        return this._createUartCommandPromise('RRP', '001s');
-      })
-      .then(() => {
-        return this._createUartCommandPromise('BSZ', '0000');
-      })
-      .then(() => {
-        return this._createUartCommandPromise('DFA', '0001');
-      })
-      .then(() => {
-        return this._createUartCommandPromise('AL1', '0002');
-      })
-      .then(() => {
-        return this._createUartCommandPromise('AH1', '0800');
-      })
-      .then(() => {
-        return this._createUartCommandPromise('AL8', '0300');
-      })
-      .then(() => {
-        return this._createUartCommandPromise('AH8', '0600');
-      })
-      .then(() => {
-        return this._createUartCommandPromise('AC8', '0003');
-      })
-      .then(() => {
-        return this._createCommandPromise('CRS', '0000');
-      })
-      .then(() => {
-        return this._onFftReady();
-      });
+  async _onInitCompleted() {
+    await this._createCommand('CPS', '0000');
+    await this._createUartCommand('RMC', '0000');
+    await this._createUartCommand('RRP', '001s');
+    await this._createUartCommand('BSZ', '0000');
+    await this._createUartCommand('DFA', '0001');
+    await this._createUartCommand('AL1', '0002');
+    await this._createUartCommand('AH1', '0800');
+    await this._createUartCommand('AL8', '0300');
+    await this._createUartCommand('AH8', '0600');
+    await this._createUartCommand('AC8', '0003');
+    await this._createCommand('CRS', '0000');
+    return this._onFftReady();
   }
 
   _onFftReady() {
     this.commandMode = false;
-    this.fftHeaderInProgress = true;
-    this.fftHeader = null;
+    this.rawMsgHeaderInProgress = true;
+    this.rawMsgHeader = null;
     this.bus.emit('connected');
-    this.debug('[_onFftReady] OK');
-    this.bus.on('fft', e => {
-      for (; 0 < e.length; ) {
-        if (this.fftHeaderInProgress) {
-          this.fftHeader = this.fftHeader || Buffer.from([]);
-          const t = this.fftHeader.length;
+    debug('[_onFftReady] OK');
+    this.bus.on('fft', (dataBuf) => {
+      for (; 0 < dataBuf.length; ) {
+        if (this.rawMsgHeaderInProgress) {
+          this.rawMsgHeader = this.rawMsgHeader || Buffer.from([]);
+          const headerLength = this.rawMsgHeader.length;
           if (
-            ((this.fftHeader = Buffer.concat([
-              this.fftHeader,
-              e.slice(0, 12 - t)
+            ((this.rawMsgHeader = Buffer.concat([
+              this.rawMsgHeader,
+              dataBuf.slice(0, RAW_MSG_HEADER_LENGTH - headerLength),
             ])),
-            12 !== this.fftHeader.length)
+            RAW_MSG_HEADER_LENGTH !== this.rawMsgHeader.length)
           ) {
             return;
           }
-          this.fftBodySize = 256 * this.fftHeader[9] + this.fftHeader[10] + 4;
-          this.debug(`[FFT header]\n${hexdump(this.fftHeader)}`);
-          this.debug(`FFT body size => ${this.fftBodySize}`);
-          this.fftHeaderInProgress = false;
-          this.fftBody = Buffer.from([]);
-          e = e.slice(12 - t);
+          this.rawMsgBodySize =
+            256 * this.rawMsgHeader[9] + this.rawMsgHeader[10] + 4;
+          debug(`[RAW MSG header]\n${hexdump(this.rawMsgHeader)}`);
+          debug(`[RAW MSG  body size] => ${this.rawMsgBodySize}`);
+          this.rawMsgHeaderInProgress = false;
+          this.rawMsgBody = Buffer.from([]);
+          dataBuf = dataBuf.slice(12 - headerLength);
         }
-        const r = this.fftBodySize - this.fftBody.length;
-        this.fftBody = Buffer.concat([this.fftBody, e.slice(0, r)]);
-        e = e.slice(r);
-        if (this.fftBody.length === this.fftBodySize) {
+        const rawMsgBodySizeDiff = this.rawMsgBodySize - this.rawMsgBody.length;
+        this.rawMsgBody = Buffer.concat([
+          this.rawMsgBody,
+          dataBuf.slice(0, rawMsgBodySizeDiff),
+        ]);
+        dataBuf = dataBuf.slice(rawMsgBodySizeDiff);
+        if (this.rawMsgBody.length === this.rawMsgBodySize) {
           this.bus.emit('fft-data-arrived', {
-            header: this._parseNotifyBuf(this.fftHeader),
-            body: this._parseDataBuf(this.fftBody)
+            header: this._parseNotifyBuf(this.rawMsgHeader),
+            body: this._parseDataBuf(this.rawMsgBody),
           });
-          this.fftHeaderInProgress = true;
-          this.fftHeader = null;
-          this.fftBody = null;
-          this.fftBodySize = 0;
+          this.rawMsgHeaderInProgress = true;
+          this.rawMsgHeader = null;
+          this.rawMsgBody = null;
+          this.rawMsgBodySize = 0;
         }
       }
     });
-    this.bus.on('fft-data-arrived', e => {
-      this.debug('[fft-data-arrived] command => ' + e.header.command);
-      if ('XFD' === e.header.command) {
-        this.bus.emit('data', e.body);
+    this.bus.on('fft-data-arrived', (payload) => {
+      debug('[fft-data-arrived] command => ' + payload.header.command);
+      if ('XFD' === payload.header.command) {
+        this.bus.emit('data', payload.body);
       }
     });
   }
 
-  _openSerialPort() {
-    return new Promise(n => {
-      const t = () => {
-        this.port = new SerialPort(this.serialport, {
-          baudRate: 230400
-        });
-        this.port.on('close', () => {
-          this.bus.emit('disconnected'), (this.closed = true);
-        });
-        this.port.on('error', e => {
-          this.debug('[error] ' + e.stack);
-          this.closed &&
-            this.port.close(() => {
-              this.log('[info] trying to re-connect'), setTimeout(t, 5e3);
-            });
-          this.bus.emit('error');
-        });
-        this.port.on('open', () => {
-          this.closed = false;
-          this.commandMode = true;
-          this.debug('Serial port (' + this.serialport + ') is now open.');
-          let timer = null;
-          const ping = () => {
-            this.port.write('\r');
-            timer = setTimeout(ping, 100);
-          };
-          timer = setTimeout(ping, 100);
+  async start() {
+    const connect = () => {
+      this.port = new SerialPort(this.serialport, {
+        baudRate: 230400,
+        autoOpen: false,
+      });
+      this.port.on('close', () => {
+        this.bus.emit('disconnected');
+        this.closed = true;
+        if (this.shutdownRequested) {
+          return;
+        }
+        debug('[SerialPort:close] trying to re-connect');
+        setTimeout(connect, 5000);
+      });
+      this.port.on('error', (e) => {
+        debug('[SerialPort:error] ' + e.stack);
+        if (!this.port.isOpen) {
+          this.port.close(() => {
+            debug('[SerialPort:error] trying to re-connect');
+            setTimeout(connect, 5000);
+          });
+        }
+        this.bus.emit('error');
+      });
+      this.port.on('open', () => {
+        this.closed = false;
+        this.commandMode = true;
+        debug(
+          `[SerialPort:open] Serial port (${this.serialport}) is now open.`
+        );
+        let timer = null;
+        const ping = () => {
           this.port.write('\r');
-          this.bus.once('command-response', e => {
-            clearTimeout(timer);
-            return n(e);
-          });
-        });
-        let r = null;
-        this.port.on('data', e => {
-          this.commandMode
-            ? ((r = r || Buffer.from([])),
-              (1 < (r = Buffer.concat([r, e])).length &&
-                10 === r[r.length - 2]) ||
-              13 === r[r.length - 1]
-                ? (this.bus.emit('command-response', r), (r = null))
-                : this.bus.emit('command-response-data', e))
-            : this.bus.emit('fft', e);
-        });
-      };
-      setTimeout(t, 0);
-    });
-  }
-
-  start() {
-    return this._openSerialPort().then(e => {
-      this.debug(`[initialMessage]\n${hexdump(e)}`);
-      return new Promise((resolve, reject) => {
-        let trial = 0;
-        const init = () => {
-          this.debug(`[start] initialzing parameters...`);
-          this._onInitCompleted()
-            .then(resolve)
-            .catch(err => {
-              this.debug(
-                `[start] Error while initialzing: trial=${trial}, err=${err.message ||
-                  err}`
-              );
-              if (trial > 3) {
-                return reject(err);
-              }
-              this._onStopRequested().finally(() => {
-                setTimeout(init, 100);
-                ++trial;
-              });
-            });
+          timer = setTimeout(ping, 100);
         };
-        process.nextTick(init);
+        timer = setTimeout(ping, 100);
+        this.port.write('\r');
+        this.bus.once('command-response', (response) => {
+          debug(`[command-response]\n${hexdump(response)}`);
+          clearTimeout(timer);
+          this._startProcess();
+        });
       });
+      let r = null;
+      this.port.on('data', (dataBuf) => {
+        this.commandMode
+          ? ((r = r || Buffer.from([])),
+            (1 < (r = Buffer.concat([r, dataBuf])).length &&
+              10 === r[r.length - 2]) ||
+            13 === r[r.length - 1]
+              ? (this.bus.emit('command-response', r), (r = null))
+              : this.bus.emit('command-response-data', dataBuf))
+          : this.bus.emit('fft', dataBuf);
+      });
+
+      this.port.open((err) => {
+        if (err) {
+          debug(
+            `[Serialport:open] opening error, trying to re-connect. Err:${err.message}`
+          );
+          setTimeout(connect, 5000);
+        }
+      });
+    };
+    setTimeout(connect, 0);
+  }
+
+  async _startProcess() {
+    return new Promise((resolve, reject) => {
+      let trial = 0;
+      const init = () => {
+        debug(`[start] initialzing parameters...`);
+        this._onInitCompleted()
+          .then(resolve)
+          .catch((err) => {
+            debug(
+              `[start] Error while initialzing: trial=${trial}, err=${
+                err.message || err
+              }`
+            );
+            if (trial > 3) {
+              return reject(err);
+            }
+            this._onStopRequested().finally(() => {
+              setTimeout(init, 100);
+              ++trial;
+            });
+          });
+      };
+      process.nextTick(init);
     });
   }
 
-  shutdown() {
-    let r = this;
+  async shutdown() {
     if (this.closed) {
-      return Promise.resolve();
+      return;
     }
-    return (this.commandMode
-      ? Promise.resolve()
-      : new Promise(e => {
-          r.debug('Schedule the shutdown command...'),
-            r.bus.once('data', () => {
-              return e();
-            });
-        })
-    ).then(() => {
-      return new Promise((e, t) => {
-        return r
-          ._onShutdownRequested()
-          .then(() => {
-            ['fft', 'fft-data-arrived', 'command-response'].forEach(t => {
-              r.bus.listeners(t).forEach(e => {
-                return r.bus.removeListener(t, e);
-              });
-            });
-          })
-          .then(() => {
-            r.port.close(() => {
-              return e(true);
-            });
-          })
-          .catch(e => {
-            return t(e);
+    if (this.commandMode) {
+      await new Promise((resolve) => {
+        this.debug('Schedule the shutdown command...'),
+          this.bus.once('data', () => {
+            return resolve();
           });
       });
+    }
+    await this._onShutdownRequested();
+    ['fft', 'fft-data-arrived', 'command-response'].forEach((event) => {
+      this.bus.listeners(event).forEach((listener) => {
+        return this.bus.removeListener(event, listener);
+      });
+    });
+    return new Promise((resolve) => {
+      this.shutdownRequested = true;
+      this.port.close(() => {
+        return resolve(true);
+      });
     });
   }
 
-  _parseNotifyBuf(e) {
-    if (
-      (this.debug('[_parseNotifyBuf] buf => ' + e + ', len => ' + e.length), !e)
-    ) {
+  _parseNotifyBuf(dataBuf) {
+    if (!dataBuf) {
       throw new Error('No input!');
     }
+    debug(`[_parseNotifyBuf] buf => ${dataBuf}, len => ${dataBuf.length}`);
     return (
-      Array.isArray(e)
-        ? (e = Buffer.from(e))
-        : Buffer.isBuffer(e) || (e = Buffer.from(e.toString())),
+      Array.isArray(dataBuf)
+        ? (dataBuf = Buffer.from(dataBuf))
+        : Buffer.isBuffer(dataBuf) ||
+          (dataBuf = Buffer.from(dataBuf.toString())),
       {
-        command: e.slice(3, 6).toString(),
-        size: 256 * e[9] + e[10]
+        command: dataBuf.slice(3, 6).toString(),
+        size: 256 * dataBuf[9] + dataBuf[10],
       }
     );
   }
-  _byte2binary16(e) {
-    let t = 32768 & e,
-      r = (e >> 10) & 31,
-      n = 1023 & e;
+  _byte2binary16(byteValue) {
+    let t = 32768 & byteValue,
+      r = (byteValue >> 10) & 31,
+      n = 1023 & byteValue;
     return 31 === r
       ? 0 === n
         ? t
@@ -329,116 +354,223 @@ export class ADXL100xFFTClient {
       : (t ? -1 : 1) * Math.pow(2, r - 15) * (1 + 0.0009765625 * n);
   }
 
-  _parseDataBuf(e) {
-    if (!e) {
+  _parseDataBuf(/* FFT Data Header (36 bytes) + FFT Data */ dataBuf) {
+    if (!dataBuf) {
       throw new Error('No input!');
     }
-    if (Array.isArray(e)) {
-      e = Buffer.from(e);
-    } else if (!Buffer.isBuffer(e)) {
-      e = Buffer.from(e.toString());
+    if (Array.isArray(dataBuf)) {
+      dataBuf = Buffer.from(dataBuf);
+    } else if (!Buffer.isBuffer(dataBuf)) {
+      dataBuf = Buffer.from(dataBuf.toString());
     }
-    let t = e[0] + 256 * e[1] + 65536 * e[2] + 16777216 * e[3];
-    let r = [];
-    let n = null;
-    for (let o = 8; o < 20; o += 3) {
-      n = ((15 & e[o + 1]) << 8) + e[o];
-      r.push({
-        frequency: n
-      });
-      n = (e[o + 2] << 4) + ((240 & e[o + 1]) >> 4);
-      r.push({
-        frequency: n
-      });
-    }
+    // Config
+    const { samples, fftDataOffset } = this.edgeDeviceConfig;
 
-    let a = null;
-    let i = null;
-    for (let u = 0; u < 8; u++) {
-      (i =
-        ((((1 - 2 * ((128 & (a = e[21 + 2 * u])) >> 7)) *
-          Math.pow(2, (124 & a) >> 2)) /
-          32768) *
-          (1024 + 256 * (3 & a) + e[20 + 2 * u])) /
-        1024),
-        (r[u].amplitude = i);
-    }
-    let f = null;
+    // FFT_Timestamp
+    const timestamp =
+      dataBuf[0] +
+      256 * dataBuf[1] +
+      65536 * dataBuf[2] +
+      16777216 * dataBuf[3];
+
+    // FFT Peak Freq and Amp
+    let { peaks, raw } = this._findPeaks(dataBuf);
+
+    // FFT Body Data
     if (this.emitFftValues) {
-      f = Array(SAMPLES);
-      for (let s = 0; s < SAMPLES; s++) {
-        let c = 36 + 2 * s;
-        f[s] = this._byte2binary16(e[c] + 256 * e[c + 1]);
+      if (!raw) {
+        raw = Array(samples);
+        const bodyIndexOffset = 36 + fftDataOffset;
+        for (let i = 0; i < samples; i++) {
+          const bufIndex = bodyIndexOffset + 2 * i;
+          raw[i] = this._byte2binary16(
+            dataBuf[bufIndex] + 256 * dataBuf[bufIndex + 1]
+          );
+        }
       }
+    } else {
+      raw = null;
     }
     return {
-      raw: f,
-      timestamp: t,
-      peaks: r
+      raw,
+      timestamp,
+      peaks,
     };
   }
 
-  _convertAmp(e) {
-    return 20 * Math.log10(e) - 34;
+  _findPeaksByHeader(dataBuf) {
+    const peaks = []; // length = 8
+    let frequency = null;
+    // FFT Peak Frequencies (2 * 4 = 8 elements)
+    debug(
+      `[FFT Data Header:Peak Freq.]\n${hexdump(
+        dataBuf.slice(FFT_DATA_HEADER_PEAK_FREQ_IDX, 20)
+      )}`
+    );
+    for (let i = FFT_DATA_HEADER_PEAK_FREQ_IDX; i < 20; i += 3) {
+      frequency = ((0x0f & dataBuf[i + 1]) << 8) + dataBuf[i];
+      debug(
+        `${frequency}, 0x0f & dataBuf[i + 1]<< 8=${
+          0x0f & (dataBuf[i + 1] << 8)
+        }, dataBuf[i]=${dataBuf[i]}`
+      );
+      peaks.push({
+        frequency,
+      });
+      frequency = (dataBuf[i + 2] << 4) + ((0xf0 & dataBuf[i + 1]) >> 4);
+      debug(
+        `${frequency}, 0x0f & dataBuf[i + 2] << 4=${
+          0x0f & (dataBuf[i + 1] << 8)
+        }, (0xf0 & dataBuf[i + 1]) >> 4=${(0xf0 & dataBuf[i + 1]) >> 4}`
+      );
+      peaks.push({
+        frequency,
+      });
+    }
+
+    debug(
+      `[FFT Data Header:Peak Amp.]\n${hexdump(
+        dataBuf.slice(FFT_DATA_HEADER_PEAK_VAL_IDX, 36)
+      )}`
+    );
+    for (let i = 0; i < 8; i++) {
+      // FFT Peak Amplitude Values (8 elements)
+      const idx = FFT_DATA_HEADER_PEAK_VAL_IDX + 2 * i;
+      const first = dataBuf[idx];
+      const second = dataBuf[idx + 1];
+      peaks[i].amplitude =
+        ((((1 - 2 * ((0x80 & second) >> 7)) *
+          Math.pow(2, (0x7c & second) >> 2)) /
+          32768) * // Math.pow(2, 15)
+          (1024 + 256 * (0x03 & second) + first)) /
+        1024;
+    }
+    return {
+      raw: null,
+      peaks,
+    };
   }
 
-  format(e, topic, r, payloadFormat) {
-    let o = this,
-      a = {
-        timestamp: e.timestamp,
-        topic
-      };
-    r < 0 ? (r = 0) : 8 < r && (r = 8);
-    let i = e.peaks.slice(0, r);
+  _findPeaksByBody(dataBuf) {
+    // Config
+    const {
+      peakFinderByBody,
+      fftDataOffset,
+      samples,
+      ampFullscale,
+      ampCorrection,
+    } = this.edgeDeviceConfig;
+    // Raw FFT Body Data
+    const raw = Array(samples);
+    const bodyIndexOffset = 36 + fftDataOffset;
+    for (let i = 0; i < samples; i++) {
+      const bufIndex = bodyIndexOffset + 2 * i;
+      raw[i] = this._byte2binary16(
+        dataBuf[bufIndex] + 256 * dataBuf[bufIndex + 1]
+      );
+    }
+    const peaks = raw
+      .slice(peakFinderByBody.startIndex) // exclude first N values for sorting
+      .sort((a, b) => b - a)
+      .slice(0, 8)
+      .map((rawAmpValue) => {
+        return {
+          frequency: raw.indexOf(rawAmpValue),
+          amplitude: rawAmpValue,
+        };
+      });
+    return {
+      raw,
+      peaks,
+    };
+  }
+
+  _convertAmp(rawAmpValue, ampFullscale, ampCorrection) {
+    return ampFullscale * Math.log10(rawAmpValue) - ampCorrection;
+  }
+
+  format(data, topic, numOfPeaks, payloadFormat) {
+    const {
+      samples,
+      sampleFreq,
+      ampFullscale,
+      ampCorrection,
+    } = this.edgeDeviceConfig;
+    const payload = {
+      timestamp: data.timestamp,
+      topic,
+    };
+    if (numOfPeaks < 0) {
+      numOfPeaks = 0;
+    } else if (8 < numOfPeaks) {
+      numOfPeaks = 8;
+    }
+    const peaks = data.peaks.slice(0, numOfPeaks);
     switch (payloadFormat) {
       case 'chart':
       case 'chartWithoutPeak':
-        let u = ['FFT'],
-          f = [
-            e.raw
-              ? e.raw.map(e => {
-                  return o._convertAmp(e);
-                })
-              : []
-          ];
-        'chart' === payloadFormat &&
-          i.forEach((e, t) => {
-            u.push('Peak' + (t + 1));
-            let r = Array(SAMPLES).fill(0);
-            (r[e.frequency] = o._convertAmp(e.amplitude) + 10), f.push(r);
-          }),
-          (a.payload = [
+        const series = ['FFT'];
+        const amplitude = [
+          data.raw
+            ? data.raw.map((rawAmpValue) => {
+                return this._convertAmp(
+                  rawAmpValue,
+                  ampFullscale,
+                  ampCorrection
+                );
+              })
+            : [],
+        ];
+        if ('chart' === payloadFormat) {
+          peaks.forEach((peak, i) => {
+            series.push(`Peak${i + 1}`);
+            const peakIndicator = Array(samples).fill(0);
+            peakIndicator[peak.frequency] =
+              this._convertAmp(peak.amplitude, ampFullscale, ampCorrection) +
+              GRAPH_INDICATION_DELTA;
+            amplitude.push(peakIndicator);
+          });
+          payload.payload = [
             {
-              series: u,
-              data: f,
-              labels: this.frequencyLabels
-            }
-          ]);
+              series,
+              data: amplitude,
+              labels: this.frequencyLabels,
+            },
+          ];
+        }
         break;
       case 'all':
-        let s = e.raw
-          ? Array.prototype.slice.call(e.raw, 0).map(e => {
-              return o._convertAmp(e);
+        const fft = data.raw
+          ? Array.prototype.slice.call(data.raw, 0).map((rawAmpValue) => {
+              return this._convertAmp(rawAmpValue, ampFullscale, ampCorrection);
             })
           : null;
-        a.payload = {
-          peaks: i.map(e => {
+        payload.payload = {
+          peaks: peaks.map((peak) => {
             return {
-              frequency: 0.025 * e.frequency,
-              amplitude: o._convertAmp(e.amplitude)
+              frequency: (sampleFreq / FFT_POINTS) * peak.frequency,
+              amplitude: this._convertAmp(
+                peak.amplitude,
+                ampFullscale,
+                ampCorrection
+              ),
             };
           }),
-          fft: s
+          fft,
         };
         break;
       case 'peak':
-        a.payload = i.map(e => {
+        payload.payload = peaks.map((peak) => {
           return {
-            frequency: 0.025 * e.frequency,
-            amplitude: o._convertAmp(e.amplitude)
+            frequency: (sampleFreq / FFT_POINTS) * peak.frequency,
+            amplitude: this._convertAmp(
+              peak.amplitude,
+              ampFullscale,
+              ampCorrection
+            ),
           };
         });
     }
-    return a;
+    return payload;
   }
 }
