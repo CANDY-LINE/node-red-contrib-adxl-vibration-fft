@@ -33,7 +33,7 @@ const FFT_DATA_HEADER_PEAK_FREQ_IDX = 8;
 const FFT_DATA_HEADER_PEAK_VAL_IDX = 20;
 
 const SENSOR_DEVICE_CONFIG = {
-  adkk: {
+  geenric: {
     sampleFreq: 102.4,
     ampFullscale: 20,
     ampCorrection: 34,
@@ -65,7 +65,7 @@ export class ADXL100xFFTClient {
     this.emitFftValues = opts.emitFftValues;
     this.closed = true;
     this.frequencyLabels = [];
-    this.sensorDeviceModel = opts.sensorDeviceModel || 'adkk';
+    this.sensorDeviceModel = opts.sensorDeviceModel || 'geenric';
     this.sensorDeviceConfig = SENSOR_DEVICE_CONFIG[this.sensorDeviceModel];
     const { samples, freqRange } = this.sensorDeviceConfig;
     for (let i = 0; i < samples; i++) {
