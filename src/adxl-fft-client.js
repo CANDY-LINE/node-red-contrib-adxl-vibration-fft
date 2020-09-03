@@ -26,22 +26,35 @@ import debugLogger from 'debug';
 
 const debug = debugLogger('node-red-contrib-adxl-vibration-fft:index');
 
-const SAMPLE_FREQ = 102.4;
-const AMP_FULLSCALE = 20;
-const AMP_CORRECTION = 34;
-const FREQ_RANGE = 20;
-
 const FFT_POINTS = 4096;
-const SAMPLES = parseInt(FFT_POINTS / SAMPLE_FREQ * FREQ_RANGE);
 const GRAPH_INDICATION_DELTA = 10; // A gap to avoid overlap the peak indicator on the graph
 const RAW_MSG_HEADER_LENGTH = 12;
 const FFT_DATA_HEADER_PEAK_FREQ_IDX = 8;
 const FFT_DATA_HEADER_PEAK_VAL_IDX = 20;
 
+const SENSOR_DEVICE_CONFIG = {
+  adkk: {
+    sampleFreq: 102.4,
+    ampFullscale: 20,
+    ampCorrection: 34,
+    freqRange: 20,
+    ignoreFftHeaderPeaks: false,
+  },
+  uq: {
+    sampleFreq: 107.5,
+    ampFullscale: 20,
+    ampCorrection: 20,
+    freqRange: 2,
+    ignoreFftHeaderPeaks: true,
+  },
+};
+Object.values(SENSOR_DEVICE_CONFIG).forEach((config) => {
+  config.samples = parseInt(
+    (FFT_POINTS / config.sampleFreq) * config.freqRange
+  );
+});
+
 export class ADXL100xFFTClient {
-  static get SAMPLES() {
-    return SAMPLES;
-  }
   constructor(opts = {}) {
     this.serialport = opts.serialport;
     if (opts instanceof EventEmitter) {
@@ -52,9 +65,12 @@ export class ADXL100xFFTClient {
     this.emitFftValues = opts.emitFftValues;
     this.closed = true;
     this.frequencyLabels = [];
-    for (let i = 0; i < SAMPLES; i++) {
+    this.sensorDeviceModel = opts.sensorDeviceModel || 'adkk';
+    this.sensorDeviceConfig = SENSOR_DEVICE_CONFIG[this.sensorDeviceModel];
+    const { samples, freqRange } = this.sensorDeviceConfig;
+    for (let i = 0; i < samples; i++) {
       this.frequencyLabels.push(
-        Math.floor((FREQ_RANGE * i) / (SAMPLES - 1)) + 'kHz'
+        `${Math.floor((freqRange * i) / (samples - 1))}kHz`
       );
     }
   }
@@ -319,12 +335,16 @@ export class ADXL100xFFTClient {
     } else if (!Buffer.isBuffer(dataBuf)) {
       dataBuf = Buffer.from(dataBuf.toString());
     }
+    // Config
+    const { samples } = this.sensorDeviceConfig;
+
     // FFT_Timestamp
     const timestamp =
       dataBuf[0] +
       256 * dataBuf[1] +
       65536 * dataBuf[2] +
       16777216 * dataBuf[3];
+
     const peaks = []; // length = 8
     let frequency = null;
     // FFT Peak Frequencies (2 * 4 = 8 elements)
@@ -373,8 +393,8 @@ export class ADXL100xFFTClient {
     }
     let raw = null;
     if (this.emitFftValues) {
-      raw = Array(SAMPLES);
-      for (let i = 0; i < SAMPLES; i++) {
+      raw = Array(samples);
+      for (let i = 0; i < samples; i++) {
         const bufIndex = 36 + 2 * i;
         raw[i] = this._byte2binary16(
           dataBuf[bufIndex] + 256 * dataBuf[bufIndex + 1]
@@ -388,11 +408,17 @@ export class ADXL100xFFTClient {
     };
   }
 
-  _convertAmp(rawAmpValue) {
-    return AMP_FULLSCALE * Math.log10(rawAmpValue) - AMP_CORRECTION;
+  _convertAmp(rawAmpValue, ampFullscale, ampCorrection) {
+    return ampFullscale * Math.log10(rawAmpValue) - ampCorrection;
   }
 
   format(data, topic, numOfPeaks, payloadFormat) {
+    const {
+      samples,
+      sampleFreq,
+      ampFullscale,
+      ampCorrection,
+    } = this.sensorDeviceConfig;
     const payload = {
       timestamp: data.timestamp,
       topic,
@@ -410,16 +436,21 @@ export class ADXL100xFFTClient {
         const amplitude = [
           data.raw
             ? data.raw.map((rawAmpValue) => {
-                return this._convertAmp(rawAmpValue);
+                return this._convertAmp(
+                  rawAmpValue,
+                  ampFullscale,
+                  ampCorrection
+                );
               })
             : [],
         ];
         if ('chart' === payloadFormat) {
           peaks.forEach((peak, i) => {
             series.push(`Peak${i + 1}`);
-            const peakIndicator = Array(SAMPLES).fill(0);
+            const peakIndicator = Array(samples).fill(0);
             peakIndicator[peak.frequency] =
-              this._convertAmp(peak.amplitude) + GRAPH_INDICATION_DELTA;
+              this._convertAmp(peak.amplitude, ampFullscale, ampCorrection) +
+              GRAPH_INDICATION_DELTA;
             amplitude.push(peakIndicator);
           });
           payload.payload = [
@@ -434,14 +465,18 @@ export class ADXL100xFFTClient {
       case 'all':
         const fft = data.raw
           ? Array.prototype.slice.call(data.raw, 0).map((rawAmpValue) => {
-              return this._convertAmp(rawAmpValue);
+              return this._convertAmp(rawAmpValue, ampFullscale, ampCorrection);
             })
           : null;
         payload.payload = {
           peaks: peaks.map((peak) => {
             return {
-              frequency: (SAMPLE_FREQ / FFT_POINTS) * peak.frequency,
-              amplitude: this._convertAmp(peak.amplitude),
+              frequency: (sampleFreq / FFT_POINTS) * peak.frequency,
+              amplitude: this._convertAmp(
+                peak.amplitude,
+                ampFullscale,
+                ampCorrection
+              ),
             };
           }),
           fft,
@@ -450,8 +485,12 @@ export class ADXL100xFFTClient {
       case 'peak':
         payload.payload = peaks.map((peak) => {
           return {
-            frequency: (SAMPLE_FREQ / FFT_POINTS) * peak.frequency,
-            amplitude: this._convertAmp(peak.amplitude),
+            frequency: (sampleFreq / FFT_POINTS) * peak.frequency,
+            amplitude: this._convertAmp(
+              peak.amplitude,
+              ampFullscale,
+              ampCorrection
+            ),
           };
         });
     }
