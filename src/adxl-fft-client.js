@@ -38,14 +38,19 @@ const EDGE_DEVICE_CONFIG = {
     ampFullscale: 20,
     ampCorrection: 34,
     freqRange: 20,
-    ignoreFftHeaderPeaks: false,
+    fftDataOffset: 0,
+    peakFinder: 'Header',
   },
   uq: {
     sampleFreq: 107.5,
     ampFullscale: 20,
     ampCorrection: 20,
     freqRange: 2,
-    ignoreFftHeaderPeaks: true,
+    fftDataOffset: 2 * 3, // Peak, RMS, CF
+    peakFinder: 'Body',
+    peakFinderByBody: {
+      startIndex: 2,
+    },
   },
 };
 Object.values(EDGE_DEVICE_CONFIG).forEach((config) => {
@@ -67,14 +72,15 @@ export class ADXL100xFFTClient {
     this.frequencyLabels = [];
     this.edgeDeviceModel = opts.edgeDeviceModel || 'generic';
     this.edgeDeviceConfig = EDGE_DEVICE_CONFIG[this.edgeDeviceModel];
-    const { samples, freqRange } = this.edgeDeviceConfig;
+    const { samples, freqRange, peakFinder } = this.edgeDeviceConfig;
     for (let i = 0; i < samples; i++) {
       this.frequencyLabels.push(
         `${Math.floor(((freqRange * i) / (samples - 1)) * 10) / 10}kHz`
       );
     }
+    this._findPeaks = this[`_findPeaksBy${peakFinder}`].bind(this);
     debug(
-      `$$$$$$$$$$ [ADXL100xFFTClient] opts.edgeDeviceModel=>[${opts.edgeDeviceModel}, this.edgeDeviceModel=>[${this.edgeDeviceModel}]`
+      `$$$$$$$$$$ [ADXL100xFFTClient] opts.edgeDeviceModel=>[${opts.edgeDeviceModel}], this.edgeDeviceModel=>[${this.edgeDeviceModel}]`
     );
   }
 
@@ -339,7 +345,7 @@ export class ADXL100xFFTClient {
       dataBuf = Buffer.from(dataBuf.toString());
     }
     // Config
-    const { samples } = this.edgeDeviceConfig;
+    const { samples, fftDataOffset } = this.edgeDeviceConfig;
 
     // FFT_Timestamp
     const timestamp =
@@ -348,6 +354,32 @@ export class ADXL100xFFTClient {
       65536 * dataBuf[2] +
       16777216 * dataBuf[3];
 
+    // FFT Peak Freq and Amp
+    let { peaks, raw } = this._findPeaks(dataBuf);
+
+    // FFT Body Data
+    if (this.emitFftValues) {
+      if (!raw) {
+        raw = Array(samples);
+        const bodyIndexOffset = 36 + fftDataOffset;
+        for (let i = 0; i < samples; i++) {
+          const bufIndex = bodyIndexOffset + 2 * i;
+          raw[i] = this._byte2binary16(
+            dataBuf[bufIndex] + 256 * dataBuf[bufIndex + 1]
+          );
+        }
+      }
+    } else {
+      raw = null;
+    }
+    return {
+      raw,
+      timestamp,
+      peaks,
+    };
+  }
+
+  _findPeaksByHeader(dataBuf) {
     const peaks = []; // length = 8
     let frequency = null;
     // FFT Peak Frequencies (2 * 4 = 8 elements)
@@ -394,19 +426,42 @@ export class ADXL100xFFTClient {
           (1024 + 256 * (0x03 & second) + first)) /
         1024;
     }
-    let raw = null;
-    if (this.emitFftValues) {
-      raw = Array(samples);
-      for (let i = 0; i < samples; i++) {
-        const bufIndex = 36 + 2 * i;
-        raw[i] = this._byte2binary16(
-          dataBuf[bufIndex] + 256 * dataBuf[bufIndex + 1]
-        );
-      }
+    return {
+      raw: null,
+      peaks,
+    };
+  }
+
+  _findPeaksByBody(dataBuf) {
+    // Config
+    const {
+      peakFinderByBody,
+      fftDataOffset,
+      samples,
+      ampFullscale,
+      ampCorrection,
+    } = this.edgeDeviceConfig;
+    // Raw FFT Body Data
+    const raw = Array(samples);
+    const bodyIndexOffset = 36 + fftDataOffset;
+    for (let i = 0; i < samples; i++) {
+      const bufIndex = bodyIndexOffset + 2 * i;
+      raw[i] = this._byte2binary16(
+        dataBuf[bufIndex] + 256 * dataBuf[bufIndex + 1]
+      );
     }
+    const peaks = raw
+      .slice(peakFinderByBody.startIndex) // exclude first N values for sorting
+      .sort((a, b) => b - a)
+      .slice(0, 8)
+      .map((rawAmpValue) => {
+        return {
+          frequency: raw.indexOf(rawAmpValue),
+          amplitude: rawAmpValue,
+        };
+      });
     return {
       raw,
-      timestamp,
       peaks,
     };
   }
