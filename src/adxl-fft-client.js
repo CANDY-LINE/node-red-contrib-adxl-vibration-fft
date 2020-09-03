@@ -200,19 +200,22 @@ export class ADXL100xFFTClient {
 
   async _openSerialPort() {
     return await new Promise((resolve) => {
-      const t = () => {
+      const connect = () => {
         this.port = new SerialPort(this.serialport, {
           baudRate: 230400,
+          autoOpen: false,
         });
         this.port.on('close', () => {
-          this.bus.emit('disconnected'), (this.closed = true);
+          this.bus.emit('disconnected');
+          this.closed = true;
         });
         this.port.on('error', (e) => {
           debug('[error] ' + e.stack);
-          this.closed &&
+          if (this.closed) {
             this.port.close(() => {
-              debug('[info] trying to re-connect'), setTimeout(t, 5e3);
+              debug('[info] trying to re-connect'), setTimeout(connect, 5000);
             });
+          }
           this.bus.emit('error');
         });
         this.port.on('open', () => {
@@ -243,7 +246,7 @@ export class ADXL100xFFTClient {
             : this.bus.emit('fft', dataBuf);
         });
       };
-      setTimeout(t, 0);
+      setTimeout(connect, 0);
     });
   }
 
