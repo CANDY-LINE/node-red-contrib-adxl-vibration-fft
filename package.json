@@ -39,9 +39,9 @@
     "CANDY EGG"
   ],
   "devDependencies": {
-    "@babel/core": "^7.14.3",
-    "@babel/plugin-transform-modules-commonjs": "^7.14.0",
-    "@babel/preset-env": "^7.14.4",
+    "@babel/core": "^7.14.6",
+    "@babel/plugin-transform-modules-commonjs": "^7.14.5",
+    "@babel/preset-env": "^7.14.7",
     "chai": "^4.3.4",
     "del": "^2.2.2",
     "gulp": "^4.0.2",
@@ -73,7 +73,7 @@
   "dependencies": {
     "debug": "^4.3.1",
     "hexdump-nodejs": "^0.1.0",
-    "serialport": "^9.1.0",
+    "serialport": "^9.2.0",
     "source-map-support": "^0.5.19"
   },
   "node-red": {
