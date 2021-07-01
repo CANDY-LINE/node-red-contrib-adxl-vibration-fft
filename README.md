@@ -107,6 +107,9 @@ $ NODE_ENV=development npm pack
 - Node Icon ... [CC BY-ND 3.0](https://creativecommons.org/licenses/by-nd/3.0/) © [icon8](https://icons8.com)
 
 # Revision History
+* 3.1.0
+  - Add an experimental feature to read data from UQUEST EMQuest-VA with ADXL1002
+
 * 3.0.1
   - Fix an issue where sensor data was not sent after reconnecing serialport
 

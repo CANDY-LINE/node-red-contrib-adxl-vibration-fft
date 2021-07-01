@@ -52,6 +52,14 @@ const EDGE_DEVICE_CONFIG = {
       startIndex: 2,
     },
   },
+  uq1002: {
+    sampleFreq: 102,
+    ampFullscale: 20,
+    ampCorrection: 20,
+    freqRange: 20,
+    fftDataOffset: 2 * 5, // Sensor Direction, Temp, Peak, RMS, CF
+    peakFinder: 'Header',
+  },
 };
 Object.values(EDGE_DEVICE_CONFIG).forEach((config) => {
   config.samples = parseInt(
@@ -415,7 +423,7 @@ export class ADXL100xFFTClient {
     for (let i = FFT_DATA_HEADER_PEAK_FREQ_IDX; i < 20; i += 3) {
       frequency = ((0x0f & dataBuf[i + 1]) << 8) + dataBuf[i];
       debug(
-        `${frequency}, 0x0f & dataBuf[i + 1]<< 8=${
+        `[_findPeaksByHeader(i:${i})] ${frequency}, 0x0f & dataBuf[i + 1]<< 8=${
           0x0f & (dataBuf[i + 1] << 8)
         }, dataBuf[i]=${dataBuf[i]}`
       );
@@ -424,7 +432,7 @@ export class ADXL100xFFTClient {
       });
       frequency = (dataBuf[i + 2] << 4) + ((0xf0 & dataBuf[i + 1]) >> 4);
       debug(
-        `${frequency}, 0x0f & dataBuf[i + 2] << 4=${
+        `[_findPeaksByHeader(i:${i})] ${frequency}, 0x0f & dataBuf[i + 2] << 4=${
           0x0f & (dataBuf[i + 1] << 8)
         }, (0xf0 & dataBuf[i + 1]) >> 4=${(0xf0 & dataBuf[i + 1]) >> 4}`
       );
@@ -434,7 +442,7 @@ export class ADXL100xFFTClient {
     }
 
     debug(
-      `[FFT Data Header:Peak Amp.]\n${hexdump(
+      `[_findPeaksByHeader] [FFT Data Header:Peak Amp.]\n${hexdump(
         dataBuf.slice(FFT_DATA_HEADER_PEAK_VAL_IDX, 36)
       )}`
     );

@@ -18,7 +18,8 @@
     },
     "edgeDeviceModel": {
       "generic": "Generic ADI Device",
-      "uq": "EMQuest-VA Device"
+      "uq": "EMQuest-VA Device",
+      "uq1002": "EMQuest-VA ADXL1002 Device (experimental)"
     },
     "placeholder": {
       "serialport": "e.g. /dev/ttyUSB3",
